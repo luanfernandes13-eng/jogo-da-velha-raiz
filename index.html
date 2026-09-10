@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jogo da Velha</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -159,7 +160,7 @@
             text-align: center;
             position: relative;
             z-index: 2;
-            max-width: 540px;
+            max-width: 560px;
             width: 100%;
             display: none;
             max-height: 95vh;
@@ -180,12 +181,12 @@
         }
         .aba {
             flex: 1;
-            padding: 10px;
+            padding: 10px 6px;
             border: none;
             background: transparent;
             color: #666;
             font-weight: bold;
-            font-size: 0.85em;
+            font-size: 0.8em;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s;
@@ -235,6 +236,16 @@
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-8px); }
             75% { transform: translateX(8px); }
+        }
+
+        /* Campo código em maiúsculas */
+        #codigoEntrar {
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-align: center;
+            font-size: 1.2em;
         }
 
         /* ===== CRIAÇÃO DE PERSONAGEM ===== */
@@ -360,11 +371,8 @@
         }
         .info-selecao .destaque { color: #667eea; font-weight: bold; }
 
-        /* ===== MODO TREINAMENTO ===== */
-        .treinamento {
-            text-align: left;
-        }
-
+        /* ===== TREINAMENTO ===== */
+        .treinamento { text-align: left; }
         .dificuldades {
             display: flex;
             flex-direction: column;
@@ -386,10 +394,7 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
         }
-        .dificuldade-card.selecionada {
-            border-width: 3px;
-            transform: scale(1.02);
-        }
+        .dificuldade-card.selecionada { border-width: 3px; transform: scale(1.02); }
         .dificuldade-card.facil { border-color: #27ae60; }
         .dificuldade-card.facil.selecionada { background: linear-gradient(135deg, #d4f8e0 0%, #b8f0c8 100%); }
         .dificuldade-card.medio { border-color: #f39c12; }
@@ -397,24 +402,11 @@
         .dificuldade-card.dificil { border-color: #e74c3c; }
         .dificuldade-card.dificil.selecionada { background: linear-gradient(135deg, #ffcccc 0%, #ffaaaa 100%); }
 
-        .dificuldade-icone {
-            font-size: 2.2em;
-            line-height: 1;
-        }
+        .dificuldade-icone { font-size: 2.2em; line-height: 1; }
         .dificuldade-info { flex: 1; }
-        .dificuldade-nome {
-            font-weight: bold;
-            font-size: 1.05em;
-            color: #333;
-            margin-bottom: 3px;
-        }
-        .dificuldade-desc {
-            font-size: 0.8em;
-            color: #666;
-            line-height: 1.3;
-        }
+        .dificuldade-nome { font-weight: bold; font-size: 1.05em; color: #333; margin-bottom: 3px; }
+        .dificuldade-desc { font-size: 0.8em; color: #666; line-height: 1.3; }
 
-        /* Escolha de símbolo no treinamento */
         .escolha-simbolo {
             display: flex;
             gap: 10px;
@@ -440,8 +432,116 @@
         .simbolo-opcao .s-emoji { font-size: 1.6em; display: block; margin-bottom: 4px; }
         .simbolo-opcao .s-label { font-size: 0.85em; color: #555; }
 
-        /* Badge do robô no jogo */
-        .badge-robo {
+        /* ===== ONLINE ===== */
+        .online { text-align: left; }
+
+        .online-opcoes {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .online-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 14px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .online-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(102, 126, 234, 0.15);
+        }
+        .online-card.criar { border-color: #00b894; }
+        .online-card.criar:hover { background: linear-gradient(135deg, #e8fff5 0%, #d4f8e0 100%); }
+        .online-card.entrar { border-color: #f39c12; }
+        .online-card.entrar:hover { background: linear-gradient(135deg, #fff8e5 0%, #ffeaa7 100%); }
+
+        .online-card-icone { font-size: 2.2em; line-height: 1; }
+        .online-card-info { flex: 1; }
+        .online-card-titulo { font-weight: bold; font-size: 1.05em; color: #333; margin-bottom: 3px; }
+        .online-card-desc { font-size: 0.8em; color: #666; line-height: 1.3; }
+
+        .online-divisor {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+            color: #999;
+            font-size: 0.85em;
+        }
+        .online-divisor::before, .online-divisor::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #ddd;
+        }
+
+        /* Área de sala */
+        .sala-aguardando {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .sala-codigo {
+            background: linear-gradient(135deg, #eef1ff 0%, #e0e7ff 100%);
+            border: 2px dashed #667eea;
+            border-radius: 14px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .sala-codigo .label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .sala-codigo .codigo {
+            font-size: 2.4em;
+            font-weight: bold;
+            color: #667eea;
+            letter-spacing: 8px;
+            font-family: 'Courier New', monospace;
+            user-select: all;
+            word-break: break-all;
+            text-shadow: 2px 2px 0 rgba(102, 126, 234, 0.2);
+        }
+
+        .status-online {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            margin: 15px 0;
+            font-weight: bold;
+            text-align: center;
+        }
+        .status-online.aguardando {
+            background: #fff4d6;
+            color: #b8860b;
+            animation: pulseBg 1.5s ease-in-out infinite alternate;
+        }
+        .status-online.conectado {
+            background: #d4f8e0;
+            color: #27ae60;
+        }
+        .status-online.erro {
+            background: #ffd6d6;
+            color: #e74c3c;
+        }
+
+        @keyframes pulseBg {
+            from { opacity: 1; }
+            to { opacity: 0.65; }
+        }
+
+        /* Badge */
+        .badge-info {
             display: inline-flex;
             align-items: center;
             gap: 4px;
@@ -453,6 +553,7 @@
             font-weight: bold;
             margin-bottom: 10px;
         }
+        .badge-info.online { background: #e8fff5; color: #00b894; }
 
         /* Pensando do robô */
         .robo-pensando {
@@ -590,11 +691,7 @@
             align-items: center;
             gap: 6px;
         }
-        .rank-jogo .rank-lista {
-            max-height: 120px;
-            overflow-y: auto;
-            gap: 4px;
-        }
+        .rank-jogo .rank-lista { max-height: 120px; overflow-y: auto; gap: 4px; }
         .rank-jogo .rank-item { padding: 5px 10px; font-size: 0.85em; }
         .rank-jogo .rank-posicao { min-width: 26px; font-size: 0.9em; }
         .rank-jogo .rank-nome { font-size: 0.9em; }
@@ -834,6 +931,7 @@
             <button class="aba ativa" onclick="mudarAba('rapido')" id="abaRapido">⚡ Rápido</button>
             <button class="aba" onclick="mudarAba('personagens')" id="abaPersonagens">🎭 Personagens</button>
             <button class="aba" onclick="mudarAba('treinamento')" id="abaTreinamento">🤖 Treinamento</button>
+            <button class="aba" onclick="mudarAba('online')" id="abaOnline">🌐 Online</button>
         </div>
 
         <!-- ABA: JOGO RÁPIDO -->
@@ -881,7 +979,7 @@
             </div>
         </div>
 
-        <!-- ABA: TREINAMENTO CONTRA ROBÔ -->
+        <!-- ABA: TREINAMENTO -->
         <div class="conteudo-aba" id="conteudoTreinamento">
             <div class="treinamento">
                 <div class="campo">
@@ -898,7 +996,7 @@
                         </div>
                         <div class="simbolo-opcao o" id="simboloO" onclick="escolherSimbolo('O')">
                             <span class="s-emoji">⭕</span>
-                            <span class="s-label">Sou O (robo começa)</span>
+                            <span class="s-label">Sou O (robô começa)</span>
                         </div>
                     </div>
                 </div>
@@ -936,6 +1034,67 @@
             </div>
         </div>
 
+        <!-- ABA: ONLINE -->
+        <div class="conteudo-aba" id="conteudoOnline">
+            <div class="online">
+                <!-- Tela inicial do online -->
+                <div id="onlineInicio">
+                    <div class="campo">
+                        <label for="nomeOnline">👤 Seu nome:</label>
+                        <input type="text" id="nomeOnline" placeholder="Digite seu nome" maxlength="20">
+                    </div>
+
+                    <div class="online-opcoes">
+                        <div class="online-card criar" onclick="criarSala()">
+                            <div class="online-card-icone">🎮</div>
+                            <div class="online-card-info">
+                                <div class="online-card-titulo">Criar Sala</div>
+                                <div class="online-card-desc">Crie uma sala e envie o código de 8 letras para seu amigo</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="online-divisor">ou</div>
+
+                    <div class="campo">
+                        <label for="codigoEntrar">🔑 Código da Sala (8 letras):</label>
+                        <input type="text" id="codigoEntrar" placeholder="ABCD1234" maxlength="8">
+                    </div>
+                    <button class="btn-iniciar" onclick="entrarSala()" style="background: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);">
+                        🚪 Entrar na Sala
+                    </button>
+
+                    <div class="info-selecao" style="margin-top: 15px;">
+                        💡 Cada jogador precisa estar em um <span class="destaque">PC diferente</span> para jogar online
+                    </div>
+                </div>
+
+                <!-- Tela aguardando conexão -->
+                <div id="onlineAguardando" style="display: none;">
+                    <div class="sala-aguardando">
+                        <h3 style="color: #667eea; margin-bottom: 10px;">⏳ Aguardando oponente...</h3>
+
+                        <div class="sala-codigo">
+                            <div class="label">Envie este código para seu amigo:</div>
+                            <div class="codigo" id="codigoExibir">--------</div>
+                        </div>
+
+                        <button onclick="copiarCodigo()" style="background: linear-gradient(135deg, #0984e3 0%, #74b9ff 100%); width: 100%;">
+                            📋 Copiar Código
+                        </button>
+
+                        <div class="status-online aguardando" id="statusOnline">
+                            Aguardando conexão...
+                        </div>
+
+                        <button class="btn-voltar-lobby" onclick="cancelarOnline()" style="width: 100%; background: linear-gradient(135deg, #636e72 0%, #2d3436 100%);">
+                            ↩️ Cancelar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- RANK NO LOBBY -->
         <div class="rank-container">
             <h2>🏆 Rank dos Campeões</h2>
@@ -950,8 +1109,11 @@
     <div class="container" id="containerJogo">
         <h1>🎮 Jogo da Velha</h1>
 
-        <div class="badge-robo" id="badgeRobo" style="display:none;">
+        <div class="badge-info" id="badgeRobo" style="display:none;">
             🤖 Treinamento contra o Robô
+        </div>
+        <div class="badge-info online" id="badgeOnline" style="display:none;">
+            🌐 Jogando Online
         </div>
 
         <div class="rank-jogo">
@@ -1031,11 +1193,14 @@
         const inputNomeO = document.getElementById('nomeO');
         const inputNomePersonagem = document.getElementById('nomePersonagem');
         const inputNomeTreino = document.getElementById('nomeTreino');
+        const inputNomeOnline = document.getElementById('nomeOnline');
+        const inputCodigoEntrar = document.getElementById('codigoEntrar');
         const seletorAvatar = document.getElementById('seletorAvatar');
         const listaPersonagens = document.getElementById('listaPersonagens');
         const infoSelecao = document.getElementById('infoSelecao');
         const btnIniciarPersonagens = document.getElementById('btnIniciarPersonagens');
         const badgeRobo = document.getElementById('badgeRobo');
+        const badgeOnline = document.getElementById('badgeOnline');
         const roboPensando = document.getElementById('roboPensando');
         const bruxa = document.getElementById('bruxa');
         const fundoBruxa = document.getElementById('fundoBruxa');
@@ -1078,8 +1243,19 @@
         // ===== MODO TREINAMENTO =====
         let modoTreinamento = false;
         let dificuldadeRobo = 'medio';
-        let simboloHumano = 'X'; // qual símbolo o humano escolheu no treinamento
+        let simboloHumano = 'X';
         let roboPensandoAgora = false;
+
+        // ===== MODO ONLINE =====
+        let modoOnline = false;
+        let peer = null;
+        let conexao = null;
+        let souHost = false;
+        let meuSimboloOnline = '';
+        let simboloOponenteOnline = '';
+        let minhaVezOnline = false;
+        let jogoOnlineIniciado = false;
+        let codigoSalaAtual = '';
 
         // ===== AVATARES =====
         const avataresDisponiveis = [
@@ -1091,6 +1267,17 @@
         ];
 
         let avatarSelecionado = avataresDisponiveis[0];
+
+        // ===== GERADOR DE CÓDIGO DE SALA (8 LETRAS) =====
+        function gerarCodigoSala() {
+            // Apenas letras e números, sem caracteres ambíguos (0, O, I, L, 1)
+            const caracteres = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+            let codigo = '';
+            for (let i = 0; i < 8; i++) {
+                codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+            }
+            return codigo;
+        }
 
         // ===== ARMAZENAMENTO =====
         let storageDisponivel = true;
@@ -1223,9 +1410,12 @@
             } else if (aba === 'personagens') {
                 document.getElementById('abaPersonagens').classList.add('ativa');
                 document.getElementById('conteudoPersonagens').classList.add('ativo');
-            } else {
+            } else if (aba === 'treinamento') {
                 document.getElementById('abaTreinamento').classList.add('ativa');
                 document.getElementById('conteudoTreinamento').classList.add('ativo');
+            } else {
+                document.getElementById('abaOnline').classList.add('ativa');
+                document.getElementById('conteudoOnline').classList.add('ativo');
             }
         }
 
@@ -1390,8 +1580,7 @@
             }
 
             modoTreinamento = true;
-
-            const simboloRobo = simboloHumano === 'X' ? 'O' : 'X';
+            modoOnline = false;
 
             if (simboloHumano === 'X') {
                 nomeJogadorX = nome;
@@ -1414,11 +1603,12 @@
             return '(Difícil)';
         }
 
-        // ===== INICIAR JOGO =====
+        // ===== INICIAR JOGO LOCAL =====
         function iniciarJogoComPersonagens() {
             if (!selecaoPersonagens.X || !selecaoPersonagens.O) return;
 
             modoTreinamento = false;
+            modoOnline = false;
             nomeJogadorX = selecaoPersonagens.X.nome;
             nomeJogadorO = selecaoPersonagens.O.nome;
             avatarJogadorX = selecaoPersonagens.X.avatar;
@@ -1445,6 +1635,7 @@
             if (erro) return;
 
             modoTreinamento = false;
+            modoOnline = false;
             nomeJogadorX = nomeX;
             nomeJogadorO = nomeO;
             avatarJogadorX = '✖';
@@ -1459,17 +1650,11 @@
             avatarPlacarX.textContent = avatarJogadorX;
             avatarPlacarO.textContent = avatarJogadorO;
 
-            // Define quem começa
-            // No modo treinamento: quem escolheu X começa
-            if (modoTreinamento) {
-                jogadorQueComeca = 'X';
-            } else {
-                jogadorQueComeca = 'X';
-            }
+            jogadorQueComeca = 'X';
             jogadorAtual = jogadorQueComeca;
 
-            // Badge do robô
             badgeRobo.style.display = modoTreinamento ? 'inline-flex' : 'none';
+            badgeOnline.style.display = modoOnline ? 'inline-flex' : 'none';
 
             telaInicial.classList.remove('ativo');
             telaInicial.style.display = 'none';
@@ -1482,7 +1667,6 @@
 
             mostrarAvisoComeca(() => {
                 jogoAtivo = true;
-                // Se o robô começa, faz a jogada dele
                 verificarVezRobo();
             });
         }
@@ -1722,49 +1906,34 @@
             [0,4,8],[2,4,6]
         ];
 
-        // ===== INTELIGÊNCIA ARTIFICIAL DO ROBÔ =====
-
-        // Fácil: jogada aleatória
+        // ===== IA DO ROBÔ =====
         function jogadaFacil() {
             const vazias = [];
             estadoJogo.forEach((v, i) => { if (v === '') vazias.push(i); });
             return vazias[Math.floor(Math.random() * vazias.length)];
         }
 
-        // Médio: ganha se puder, bloqueia se necessário, senão aleatório
         function jogadaMedia(simboloRobo, simboloHumano) {
-            // 1. Tenta ganhar
             for (let combo of combinacoesVitoria) {
                 const [a, b, c] = combo;
                 const vals = [estadoJogo[a], estadoJogo[b], estadoJogo[c]];
                 const countRobo = vals.filter(v => v === simboloRobo).length;
                 const vazias = [a, b, c].filter(i => estadoJogo[i] === '');
-                if (countRobo === 2 && vazias.length === 1) {
-                    return vazias[0];
-                }
+                if (countRobo === 2 && vazias.length === 1) return vazias[0];
             }
-
-            // 2. Tenta bloquear o humano
             for (let combo of combinacoesVitoria) {
                 const [a, b, c] = combo;
                 const vals = [estadoJogo[a], estadoJogo[b], estadoJogo[c]];
                 const countHumano = vals.filter(v => v === simboloHumano).length;
                 const vazias = [a, b, c].filter(i => estadoJogo[i] === '');
-                if (countHumano === 2 && vazias.length === 1) {
-                    return vazias[0];
-                }
+                if (countHumano === 2 && vazias.length === 1) return vazias[0];
             }
-
-            // 3. Prefere o centro
             if (estadoJogo[4] === '') return 4;
-
-            // 4. Aleatório entre as vazias
             const vazias = [];
             estadoJogo.forEach((v, i) => { if (v === '') vazias.push(i); });
             return vazias[Math.floor(Math.random() * vazias.length)];
         }
 
-        // Difícil: Minimax (imbatível)
         function jogadaDificil(simboloRobo, simboloHumano) {
             let melhorPontuacao = -Infinity;
             let melhorJogada = null;
@@ -1788,7 +1957,7 @@
             if (resultado !== null) {
                 if (resultado === simboloRobo) return 10 - profundidade;
                 if (resultado === simboloHumano) return profundidade - 10;
-                return 0; // empate
+                return 0;
             }
 
             if (isMaximizando) {
@@ -1816,7 +1985,6 @@
             }
         }
 
-        // Verifica vitória em um tabuleiro específico (para o minimax)
         function verificarVencedorTabuleiro(tabuleiro, simboloRobo, simboloHumano) {
             for (let combo of combinacoesVitoria) {
                 const [a, b, c] = combo;
@@ -1828,13 +1996,10 @@
             return null;
         }
 
-        // Executa a jogada do robô
         function jogadaDoRobo() {
             if (!modoTreinamento || !jogoAtivo) return;
 
             const simboloRobo = simboloHumano === 'X' ? 'O' : 'X';
-
-            // Verifica se ainda tem espaços vazios
             const vazias = estadoJogo.filter(v => v === '').length;
             if (vazias === 0) return;
 
@@ -1849,15 +2014,12 @@
 
             if (index === undefined || index === null) return;
 
-            // Aplica a jogada
             estadoJogo[index] = simboloRobo;
             cells[index].textContent = simboloRobo;
             cells[index].classList.add('taken', simboloRobo.toLowerCase());
 
-            // Verifica resultado
             if (verificarVitoria()) {
                 const nomeVencedor = simboloRobo === 'X' ? nomeJogadorX : nomeJogadorO;
-                const avatarVencedorAtual = simboloRobo === 'X' ? avatarJogadorX : avatarJogadorO;
                 statusTexto.textContent = '🤖 ' + nomeVencedor + ' ganhou!';
 
                 if (simboloRobo === 'X') {
@@ -1867,7 +2029,6 @@
                 }
 
                 jogoAtivo = false;
-                // No treinamento, o robô NÃO entra no rank
                 setTimeout(() => {
                     perguntarContinuarOuTrocar();
                 }, 1500);
@@ -1886,12 +2047,10 @@
                 return;
             }
 
-            // Volta a vez para o humano
             jogadorAtual = simboloHumano;
             atualizarStatus();
         }
 
-        // Verifica se é a vez do robô e joga
         function verificarVezRobo() {
             if (!modoTreinamento || !jogoAtivo) return;
 
@@ -1901,7 +2060,6 @@
                 roboPensando.classList.add('ativo');
                 roboPensandoAgora = true;
 
-                // Delay para simular "pensamento"
                 const delay = dificuldadeRobo === 'facil' ? 400 :
                               dificuldadeRobo === 'medio' ? 600 : 900;
 
@@ -1911,6 +2069,322 @@
                     jogadaDoRobo();
                 }, delay);
             }
+        }
+
+        // ===== ONLINE (PeerJS) =====
+
+        function criarSala() {
+            const nome = inputNomeOnline.value.trim();
+            if (nome === '') {
+                inputNomeOnline.classList.add('erro');
+                setTimeout(() => inputNomeOnline.classList.remove('erro'), 1000);
+                return;
+            }
+
+            meuNomeOnline = nome;
+            souHost = true;
+            meuSimboloOnline = 'X';
+            simboloOponenteOnline = 'O';
+
+            // Gera código de 8 letras
+            codigoSalaAtual = gerarCodigoSala();
+
+            document.getElementById('onlineInicio').style.display = 'none';
+            document.getElementById('onlineAguardando').style.display = 'block';
+            document.getElementById('codigoExibir').textContent = codigoSalaAtual;
+
+            const statusOnline = document.getElementById('statusOnline');
+            statusOnline.textContent = 'Aguardando conexão...';
+            statusOnline.className = 'status-online aguardando';
+
+            // Cria peer com o ID personalizado (código de 8 letras)
+            // Prefixo para evitar conflito com outros usuários do PeerJS
+            const peerId = 'jv-sala-' + codigoSalaAtual;
+
+            peer = new Peer(peerId);
+
+            peer.on('open', (id) => {
+                console.log('Sala criada com ID:', id);
+                console.log('Código para compartilhar:', codigoSalaAtual);
+            });
+
+            peer.on('connection', (conn) => {
+                conexao = conn;
+                configurarConexaoOnline();
+            });
+
+            peer.on('error', (err) => {
+                console.error('Erro:', err);
+                if (err.type === 'unavailable-id') {
+                    // Código já em uso, gera outro
+                    console.log('Código em uso, gerando outro...');
+                    if (peer) peer.destroy();
+                    codigoSalaAtual = gerarCodigoSala();
+                    document.getElementById('codigoExibir').textContent = codigoSalaAtual;
+                    // Tenta novamente
+                    setTimeout(() => {
+                        const novoPeerId = 'jv-sala-' + codigoSalaAtual;
+                        peer = new Peer(novoPeerId);
+                        peer.on('open', (id) => console.log('Nova sala:', id));
+                        peer.on('connection', (conn) => {
+                            conexao = conn;
+                            configurarConexaoOnline();
+                        });
+                        peer.on('error', (e) => {
+                            statusOnline.textContent = '❌ Erro: ' + e.type;
+                            statusOnline.className = 'status-online erro';
+                        });
+                    }, 500);
+                } else {
+                    statusOnline.textContent = '❌ Erro: ' + err.type;
+                    statusOnline.className = 'status-online erro';
+                }
+            });
+        }
+
+        function entrarSala() {
+            const nome = inputNomeOnline.value.trim();
+            let codigo = inputCodigoEntrar.value.trim().toUpperCase();
+
+            if (nome === '') {
+                inputNomeOnline.classList.add('erro');
+                setTimeout(() => inputNomeOnline.classList.remove('erro'), 1000);
+                return;
+            }
+            if (codigo === '') {
+                inputCodigoEntrar.classList.add('erro');
+                setTimeout(() => inputCodigoEntrar.classList.remove('erro'), 1000);
+                return;
+            }
+
+            if (codigo.length !== 8) {
+                alert('O código deve ter exatamente 8 letras!');
+                inputCodigoEntrar.classList.add('erro');
+                setTimeout(() => inputCodigoEntrar.classList.remove('erro'), 1000);
+                return;
+            }
+
+            meuNomeOnline = nome;
+            souHost = false;
+            meuSimboloOnline = 'O';
+            simboloOponenteOnline = 'X';
+
+            document.getElementById('onlineInicio').style.display = 'none';
+            document.getElementById('onlineAguardando').style.display = 'block';
+
+            const statusOnline = document.getElementById('statusOnline');
+            statusOnline.textContent = 'Conectando...';
+            statusOnline.className = 'status-online aguardando';
+            document.getElementById('codigoExibir').textContent = codigo;
+
+            peer = new Peer();
+
+            peer.on('open', () => {
+                const peerId = 'jv-sala-' + codigo;
+                conexao = peer.connect(peerId, {
+                    reliable: true
+                });
+                configurarConexaoOnline();
+            });
+
+            peer.on('error', (err) => {
+                console.error('Erro:', err);
+                statusOnline.textContent = '❌ Não foi possível conectar. Verifique o código.';
+                statusOnline.className = 'status-online erro';
+            });
+        }
+
+        function configurarConexaoOnline() {
+            conexao.on('open', () => {
+                const statusOnline = document.getElementById('statusOnline');
+                statusOnline.textContent = '✅ Conectado! Iniciando...';
+                statusOnline.className = 'status-online conectado';
+
+                conexao.send({
+                    tipo: 'apresentacao',
+                    nome: meuNomeOnline,
+                    simbolo: meuSimboloOnline
+                });
+
+                if (souHost) {
+                    setTimeout(() => {
+                        iniciarJogoOnline();
+                    }, 1000);
+                }
+            });
+
+            conexao.on('data', (dados) => {
+                processarMensagemOnline(dados);
+            });
+
+            conexao.on('close', () => {
+                if (modoOnline) {
+                    mostrarParabens('O oponente saiu! 👋', '🔌');
+                    jogoAtivo = false;
+                }
+            });
+
+            conexao.on('error', (err) => {
+                console.error('Erro na conexão:', err);
+            });
+        }
+
+        let nomeOponenteOnline = '';
+
+        function processarMensagemOnline(dados) {
+            switch (dados.tipo) {
+                case 'apresentacao':
+                    nomeOponenteOnline = dados.nome;
+                    atualizarNomesOnline();
+                    break;
+
+                case 'iniciar':
+                    iniciarJogoOnline(false);
+                    break;
+
+                case 'jogada':
+                    aplicarJogadaOnline(dados.index);
+                    break;
+
+                case 'novoJogo':
+                    reiniciarPartidaOnline();
+                    break;
+
+                case 'sair':
+                    mostrarParabens('O oponente saiu! 👋', '🔌');
+                    jogoAtivo = false;
+                    break;
+            }
+        }
+
+        function atualizarNomesOnline() {
+            if (souHost) {
+                nomeJogadorX = meuNomeOnline + ' (você)';
+                nomeJogadorO = nomeOponenteOnline || 'Aguardando...';
+            } else {
+                nomeJogadorX = nomeOponenteOnline || 'Aguardando...';
+                nomeJogadorO = meuNomeOnline + ' (você)';
+            }
+        }
+
+        function iniciarJogoOnline(enviarSinal = true) {
+            modoOnline = true;
+            modoTreinamento = false;
+            jogoOnlineIniciado = true;
+
+            if (enviarSinal && conexao && conexao.open) {
+                conexao.send({ tipo: 'iniciar' });
+            }
+
+            atualizarNomesOnline();
+
+            rotuloXEl.textContent = '✖ ' + nomeJogadorX;
+            rotuloOEl.textContent = '⭕ ' + nomeJogadorO;
+            avatarPlacarX.textContent = '✖';
+            avatarPlacarO.textContent = '⭕';
+
+            badgeRobo.style.display = 'none';
+            badgeOnline.style.display = 'inline-flex';
+
+            jogadorQueComeca = 'X';
+            jogadorAtual = 'X';
+            minhaVezOnline = (meuSimboloOnline === 'X');
+
+            telaInicial.classList.remove('ativo');
+            telaInicial.style.display = 'none';
+            containerJogo.classList.add('ativo');
+
+            limparTabuleiro();
+            jogoAtivo = true;
+            atualizarStatusOnline();
+            atualizarRank();
+        }
+
+        function atualizarStatusOnline() {
+            if (minhaVezOnline) {
+                statusAvatar.textContent = meuSimboloOnline;
+                statusTexto.textContent = '🟢 Sua vez! (' + meuSimboloOnline + ')';
+                status.style.color = '#27ae60';
+            } else {
+                statusAvatar.textContent = simboloOponenteOnline;
+                statusTexto.textContent = '⏳ Vez do oponente... (' + simboloOponenteOnline + ')';
+                status.style.color = '#e67e22';
+            }
+        }
+
+        function aplicarJogadaOnline(index) {
+            if (estadoJogo[index] !== '') return;
+
+            estadoJogo[index] = simboloOponenteOnline;
+            cells[index].textContent = simboloOponenteOnline;
+            cells[index].classList.add('taken', simboloOponenteOnline.toLowerCase());
+
+            if (verificarVitoria()) {
+                const nomeVencedor = simboloOponenteOnline === 'X' ? nomeJogadorX : nomeJogadorO;
+                statusTexto.textContent = '🏆 ' + nomeVencedor + ' ganhou!';
+
+                if (simboloOponenteOnline === 'X') {
+                    pontosX++; atualizarPlacar(); animarPlacar(placarXEl);
+                } else {
+                    pontosO++; atualizarPlacar(); animarPlacar(placarOEl);
+                }
+
+                jogoAtivo = false;
+                setTimeout(() => {
+                    mostrarParabens(nomeVencedor + ' venceu! 🏆', simboloOponenteOnline === 'X' ? '✖' : '⭕');
+                }, 300);
+                return;
+            }
+
+            if (estadoJogo.every(c => c !== '')) {
+                statusTexto.textContent = '🧙‍♀️ A velha ganhou!';
+                statusAvatar.textContent = '🧙‍♀️';
+                pontosVelha++; atualizarPlacar(); animarPlacar(placarVelhaEl);
+                mostrarBruxa();
+                jogoAtivo = false;
+                return;
+            }
+
+            minhaVezOnline = true;
+            jogadorAtual = meuSimboloOnline;
+            atualizarStatusOnline();
+        }
+
+        function reiniciarPartidaOnline() {
+            limparTabuleiro();
+            jogoAtivo = true;
+            minhaVezOnline = (meuSimboloOnline === 'X');
+            jogadorAtual = 'X';
+            atualizarStatusOnline();
+            status.style.color = '#667eea';
+        }
+
+        function copiarCodigo() {
+            const codigo = document.getElementById('codigoExibir').textContent;
+            if (codigo === '--------' || codigo === '...') return;
+
+            navigator.clipboard.writeText(codigo).then(() => {
+                const btn = event.target;
+                const textoOriginal = btn.textContent;
+                btn.textContent = '✅ Copiado!';
+                setTimeout(() => { btn.textContent = textoOriginal; }, 1500);
+            }).catch(() => {
+                const input = document.createElement('input');
+                input.value = codigo;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                alert('Código copiado: ' + codigo);
+            });
+        }
+
+        function cancelarOnline() {
+            if (peer) { peer.destroy(); peer = null; }
+            if (conexao) { conexao.close(); conexao = null; }
+            codigoSalaAtual = '';
+            document.getElementById('onlineInicio').style.display = 'block';
+            document.getElementById('onlineAguardando').style.display = 'none';
         }
 
         // ===== PARABÉNS =====
@@ -1927,11 +2401,24 @@
                     animacaoAtiva = false;
                     if (intervaloFogos) { clearInterval(intervaloFogos); intervaloFogos = null; }
                 }, 800);
-            }, 1500);
+            }, 2000);
         }
 
         // ===== PERGUNTA =====
         function perguntarContinuarOuTrocar() {
+            if (modoOnline) {
+                if (timerPergunta) clearTimeout(timerPergunta);
+                timerPergunta = setTimeout(() => {
+                    if (confirm('Deseja jogar novamente com o mesmo oponente?')) {
+                        conexao.send({ tipo: 'novoJogo' });
+                        reiniciarPartidaOnline();
+                    } else {
+                        sairParaLobby();
+                    }
+                }, 2000);
+                return;
+            }
+
             if (timerPergunta) clearTimeout(timerPergunta);
             timerPergunta = setTimeout(() => {
                 modalPergunta.classList.add('ativo');
@@ -1942,7 +2429,6 @@
             modalPergunta.classList.remove('ativo');
             limparTabuleiro();
 
-            // No treinamento: sempre X começa (se humano é O, o robô começa)
             if (modoTreinamento) {
                 jogadorQueComeca = 'X';
             } else {
@@ -1975,9 +2461,11 @@
             jogoAtivo = false;
 
             modoTreinamento = false;
+            modoOnline = false;
             selecaoPersonagens = { X: null, O: null };
             renderizarListaPersonagens();
             badgeRobo.style.display = 'none';
+            badgeOnline.style.display = 'none';
 
             containerJogo.classList.remove('ativo');
             telaInicial.style.display = 'block';
@@ -2001,6 +2489,17 @@
         }
 
         function sairParaLobby() {
+            if (modoOnline && conexao && conexao.open) {
+                conexao.send({ tipo: 'sair' });
+            }
+            if (peer) { peer.destroy(); peer = null; }
+            if (conexao) { conexao.close(); conexao = null; }
+            codigoSalaAtual = '';
+
+            document.getElementById('onlineInicio').style.display = 'block';
+            document.getElementById('onlineAguardando').style.display = 'none';
+            document.getElementById('codigoExibir').textContent = '--------';
+
             pararFogos();
             pararBruxa();
             if (timerPergunta) { clearTimeout(timerPergunta); timerPergunta = null; }
@@ -2020,7 +2519,11 @@
             jogadorAtual = 'X';
             jogoAtivo = false;
             modoTreinamento = false;
+            modoOnline = false;
+            jogoOnlineIniciado = false;
             badgeRobo.style.display = 'none';
+            badgeOnline.style.display = 'none';
+            status.style.color = '#667eea';
 
             containerJogo.classList.remove('ativo');
             telaInicial.style.display = 'block';
@@ -2037,11 +2540,14 @@
             if (!jogoAtivo) return;
             if (estadoJogo[index] !== '') return;
 
-            // No treinamento: bloqueia cliques quando é a vez do robô
             if (modoTreinamento) {
                 const simboloRobo = simboloHumano === 'X' ? 'O' : 'X';
                 if (jogadorAtual === simboloRobo) return;
                 if (roboPensandoAgora) return;
+            }
+
+            if (modoOnline) {
+                if (!minhaVezOnline) return;
             }
 
             estadoJogo[index] = jogadorAtual;
@@ -2059,18 +2565,22 @@
                     pontosO++; atualizarPlacar(); animarPlacar(placarOEl);
                 }
 
-                // No treinamento: só registra no rank se o HUMANO venceu
                 if (modoTreinamento) {
                     const simboloRobo = simboloHumano === 'X' ? 'O' : 'X';
                     if (jogadorAtual !== simboloRobo) {
-                        // Humano venceu
                         registrarVitoria(nomeVencedor, avatarVencedorAtual);
                         atualizarRank();
                         mostrarParabens('Você venceu o robô! 🏆', avatarVencedorAtual);
                     } else {
-                        // Robô venceu - sem parabéns, sem rank
                         mostrarParabens('O robô venceu! 🤖', '🤖');
                     }
+                } else if (modoOnline) {
+                    if (conexao && conexao.open) {
+                        conexao.send({ tipo: 'jogada', index, vitoria: true });
+                    }
+                    registrarVitoria(nomeVencedor, avatarVencedorAtual);
+                    atualizarRank();
+                    mostrarParabens(nomeVencedor + ' venceu! 🏆', avatarVencedorAtual);
                 } else {
                     registrarVitoria(nomeVencedor, avatarVencedorAtual);
                     atualizarRank();
@@ -2088,16 +2598,28 @@
                 pontosVelha++; atualizarPlacar(); animarPlacar(placarVelhaEl);
                 mostrarBruxa();
                 jogoAtivo = false;
+
+                if (modoOnline && conexao && conexao.open) {
+                    conexao.send({ tipo: 'jogada', index, empate: true });
+                }
+
                 setTimeout(() => {
                     perguntarContinuarOuTrocar();
                 }, 4000);
                 return;
             }
 
+            if (modoOnline && conexao && conexao.open) {
+                conexao.send({ tipo: 'jogada', index });
+                minhaVezOnline = false;
+                jogadorAtual = simboloOponenteOnline;
+                atualizarStatusOnline();
+                return;
+            }
+
             jogadorAtual = jogadorAtual === 'X' ? 'O' : 'X';
             atualizarStatus();
 
-            // Verifica se é a vez do robô
             verificarVezRobo();
         }
 
@@ -2128,6 +2650,15 @@
 
         // ===== REINICIAR =====
         function reiniciarJogo() {
+            if (modoOnline) {
+                if (confirm('Reiniciar a partida? O oponente também será reiniciado.')) {
+                    if (conexao && conexao.open) {
+                        conexao.send({ tipo: 'novoJogo' });
+                    }
+                    reiniciarPartidaOnline();
+                }
+                return;
+            }
             modalPergunta.classList.add('ativo');
         }
 
