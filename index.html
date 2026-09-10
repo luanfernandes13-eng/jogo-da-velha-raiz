@@ -1,0 +1,2145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Velha</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            display: none;
+        }
+        .container.ativo { display: block; }
+
+        h1 { color: #333; margin-bottom: 15px; font-size: 2em; }
+
+        .placar {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .placar-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 10px 18px;
+            min-width: 110px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        .placar-item .avatar-placar {
+            font-size: 2em;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .placar-item .rotulo {
+            font-size: 0.75em;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+        .placar-item .pontos { font-size: 1.8em; font-weight: bold; line-height: 1; }
+        .placar-item.x { border-color: #667eea; }
+        .placar-item.x .pontos { color: #667eea; }
+        .placar-item.o { border-color: #e74c3c; }
+        .placar-item.o .pontos { color: #e74c3c; }
+        .placar-item.velha { border-color: #9b59b6; }
+        .placar-item.velha .pontos { color: #9b59b6; }
+        .placar-item.pontuou { animation: pontuar 0.6s ease; }
+
+        @keyframes pontuar {
+            0% { transform: scale(1); }
+            30% { transform: scale(1.25); }
+            60% { transform: scale(0.95); }
+            100% { transform: scale(1); }
+        }
+
+        .status {
+            font-size: 1.3em;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-weight: bold;
+            min-height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .status .status-avatar { font-size: 1.5em; }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+            margin: 0 auto 20px;
+        }
+
+        .cell {
+            background: #f0f0f0;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+        .cell:hover { background: #e0e0e0; transform: scale(1.05); }
+        .cell.taken { cursor: not-allowed; }
+        .cell.taken:hover { transform: none; }
+        .cell.x { color: #667eea; }
+        .cell.o { color: #e74c3c; }
+        .cell.winner { background: #ffeaa7; animation: pulse 0.5s ease-in-out infinite alternate; }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+            margin: 4px;
+        }
+        button:hover { transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+
+        .botoes-jogo {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-voltar-lobby {
+            background: linear-gradient(135deg, #636e72 0%, #2d3436 100%);
+        }
+
+        /* ===== TELA INICIAL ===== */
+        .tela-inicial {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            max-width: 540px;
+            width: 100%;
+            display: none;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+        .tela-inicial.ativo { display: block; }
+        .tela-inicial h1 { color: #333; margin-bottom: 20px; font-size: 1.8em; }
+
+        /* ===== ABAS ===== */
+        .abas {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            background: #f0f0f0;
+            padding: 4px;
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+        .aba {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: #666;
+            font-weight: bold;
+            font-size: 0.85em;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0;
+            white-space: nowrap;
+        }
+        .aba.ativa {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        .aba:hover { transform: none; }
+
+        .conteudo-aba { display: none; }
+        .conteudo-aba.ativo { display: block; animation: fadeIn 0.3s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ===== CAMPOS ===== */
+        .campo { margin-bottom: 15px; text-align: left; }
+        .campo label {
+            display: block;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 6px;
+            font-size: 0.95em;
+        }
+        .campo label .simbolo { font-size: 1.3em; vertical-align: middle; margin-right: 5px; }
+        .campo label .simbolo.x { color: #667eea; }
+        .campo label .simbolo.o { color: #e74c3c; }
+
+        .campo input {
+            width: 100%;
+            padding: 11px 14px;
+            font-size: 1em;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-family: inherit;
+        }
+        .campo input:focus { outline: none; border-color: #667eea; }
+        .campo input.erro { border-color: #e74c3c; animation: shake 0.3s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        /* ===== CRIAÇÃO DE PERSONAGEM ===== */
+        .criar-personagem { text-align: left; }
+
+        .seletor-avatar {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin-top: 6px;
+            max-height: 160px;
+            overflow-y: auto;
+            padding: 4px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+        .avatar-opcao {
+            font-size: 1.6em;
+            padding: 6px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+        .avatar-opcao:hover { background: #e0e0e0; transform: scale(1.1); }
+        .avatar-opcao.selecionado {
+            background: #667eea;
+            border-color: #764ba2;
+            transform: scale(1.15);
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+        }
+
+        .lista-personagens {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+            min-height: 40px;
+        }
+        .lista-vazia {
+            color: #999;
+            font-style: italic;
+            font-size: 0.85em;
+            padding: 8px;
+            text-align: center;
+            width: 100%;
+        }
+        .personagem-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1 1 calc(50% - 4px);
+            min-width: 140px;
+        }
+        .personagem-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .personagem-card.selecionado {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #eef1ff 0%, #e0e7ff 100%);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+        .personagem-card .p-avatar { font-size: 1.6em; line-height: 1; }
+        .personagem-card .p-info { flex: 1; overflow: hidden; }
+        .personagem-card .p-nome {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .personagem-card .p-vitorias { font-size: 0.75em; color: #27ae60; font-weight: bold; }
+        .personagem-card .p-remover {
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            width: 22px;
+            height: 22px;
+            font-size: 0.75em;
+            line-height: 1;
+            padding: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+        }
+        .personagem-card .p-remover:hover { background: #ee2c3d; transform: none; }
+
+        /* ===== BOTÕES ===== */
+        .btn-iniciar {
+            width: 100%;
+            margin-top: 10px;
+            padding: 14px;
+            font-size: 1.05em;
+        }
+        .btn-iniciar:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .info-selecao {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .info-selecao .destaque { color: #667eea; font-weight: bold; }
+
+        /* ===== MODO TREINAMENTO ===== */
+        .treinamento {
+            text-align: left;
+        }
+
+        .dificuldades {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .dificuldade-card {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 14px;
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: all 0.25s;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .dificuldade-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+        }
+        .dificuldade-card.selecionada {
+            border-width: 3px;
+            transform: scale(1.02);
+        }
+        .dificuldade-card.facil { border-color: #27ae60; }
+        .dificuldade-card.facil.selecionada { background: linear-gradient(135deg, #d4f8e0 0%, #b8f0c8 100%); }
+        .dificuldade-card.medio { border-color: #f39c12; }
+        .dificuldade-card.medio.selecionada { background: linear-gradient(135deg, #ffeaa7 0%, #ffd86b 100%); }
+        .dificuldade-card.dificil { border-color: #e74c3c; }
+        .dificuldade-card.dificil.selecionada { background: linear-gradient(135deg, #ffcccc 0%, #ffaaaa 100%); }
+
+        .dificuldade-icone {
+            font-size: 2.2em;
+            line-height: 1;
+        }
+        .dificuldade-info { flex: 1; }
+        .dificuldade-nome {
+            font-weight: bold;
+            font-size: 1.05em;
+            color: #333;
+            margin-bottom: 3px;
+        }
+        .dificuldade-desc {
+            font-size: 0.8em;
+            color: #666;
+            line-height: 1.3;
+        }
+
+        /* Escolha de símbolo no treinamento */
+        .escolha-simbolo {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .simbolo-opcao {
+            flex: 1;
+            padding: 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: center;
+            font-weight: bold;
+        }
+        .simbolo-opcao:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+        .simbolo-opcao.selecionado { border-width: 3px; transform: scale(1.03); }
+        .simbolo-opcao.x { border-color: #667eea; }
+        .simbolo-opcao.x.selecionado { background: linear-gradient(135deg, #eef1ff 0%, #dde4ff 100%); }
+        .simbolo-opcao.o { border-color: #e74c3c; }
+        .simbolo-opcao.o.selecionado { background: linear-gradient(135deg, #ffe0e0 0%, #ffcccc 100%); }
+        .simbolo-opcao .s-emoji { font-size: 1.6em; display: block; margin-bottom: 4px; }
+        .simbolo-opcao .s-label { font-size: 0.85em; color: #555; }
+
+        /* Badge do robô no jogo */
+        .badge-robo {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #eef1ff;
+            color: #667eea;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        /* Pensando do robô */
+        .robo-pensando {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.95em;
+            margin-bottom: 10px;
+            height: 20px;
+        }
+        .robo-pensando.ativo { display: flex; }
+        .robo-pensando .dot {
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            animation: bounce 1s infinite alternate;
+        }
+        .robo-pensando .dot:nth-child(2) { animation-delay: 0.2s; }
+        .robo-pensando .dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            from { transform: translateY(0); opacity: 0.5; }
+            to { transform: translateY(-6px); opacity: 1; }
+        }
+
+        /* ===== RANK ===== */
+        .rank-container {
+            margin-top: 20px;
+            border-top: 2px dashed #e0e0e0;
+            padding-top: 18px;
+            text-align: left;
+        }
+        .rank-container h2 {
+            color: #333;
+            font-size: 1.15em;
+            margin-bottom: 12px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+        .rank-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .rank-vazio {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+            padding: 12px;
+            font-size: 0.9em;
+        }
+        .rank-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 8px 12px;
+            border-left: 5px solid #ddd;
+            transition: all 0.3s;
+        }
+        .rank-item:hover { background: #eef0f3; }
+        .rank-item.primeiro {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-left-color: #f39c12;
+            box-shadow: 0 4px 12px rgba(243, 156, 18, 0.3);
+        }
+        .rank-item.segundo {
+            background: linear-gradient(135deg, #e8e8e8 0%, #c8c8c8 100%);
+            border-left-color: #95a5a6;
+        }
+        .rank-item.terceiro {
+            background: linear-gradient(135deg, #f5d0b0 0%, #e0a878 100%);
+            border-left-color: #cd7f32;
+        }
+        .rank-posicao {
+            font-weight: bold;
+            font-size: 1em;
+            min-width: 32px;
+            text-align: center;
+            color: #555;
+        }
+        .rank-avatar { font-size: 1.4em; line-height: 1; }
+        .rank-nome {
+            flex: 1;
+            font-weight: bold;
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.95em;
+        }
+        .rank-vitorias {
+            font-weight: bold;
+            color: #27ae60;
+            font-size: 0.95em;
+            white-space: nowrap;
+        }
+        .rank-vitorias span { font-size: 0.85em; color: #666; font-weight: normal; }
+
+        .btn-limpar-rank {
+            background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+            width: 100%;
+            margin-top: 10px;
+            padding: 8px;
+            font-size: 0.85em;
+        }
+
+        /* ===== RANK NA TELA DO JOGO ===== */
+        .rank-jogo {
+            margin-bottom: 18px;
+            background: #f8f9fa;
+            border-radius: 14px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            text-align: left;
+        }
+        .rank-jogo h3 {
+            color: #333;
+            font-size: 0.95em;
+            margin-bottom: 8px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+        .rank-jogo .rank-lista {
+            max-height: 120px;
+            overflow-y: auto;
+            gap: 4px;
+        }
+        .rank-jogo .rank-item { padding: 5px 10px; font-size: 0.85em; }
+        .rank-jogo .rank-posicao { min-width: 26px; font-size: 0.9em; }
+        .rank-jogo .rank-nome { font-size: 0.9em; }
+        .rank-jogo .rank-vitorias { font-size: 0.85em; }
+        .rank-jogo .rank-avatar { font-size: 1.2em; }
+
+        /* ===== MODAIS ===== */
+        #fireworks {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            display: none;
+        }
+
+        .modal-parabens {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            pointer-events: none;
+        }
+        .modal-parabens.ativo { display: flex; }
+
+        .modal-conteudo {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            padding: 40px 60px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            border: 4px solid #fff;
+            animation: bounceIn 0.8s ease;
+        }
+        .modal-conteudo .avatar-vencedor {
+            font-size: 4em;
+            line-height: 1;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .modal-conteudo h2 { font-size: 2.5em; color: #d63031; margin-bottom: 15px; }
+        .modal-conteudo p { font-size: 1.5em; color: #2d3436; font-weight: bold; }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-pergunta {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+        .modal-pergunta.ativo { display: flex; }
+
+        .modal-pergunta-conteudo {
+            background: white;
+            padding: 35px 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+        }
+        .modal-pergunta-conteudo h2 { color: #333; margin-bottom: 15px; font-size: 1.6em; }
+        .modal-pergunta-conteudo p { color: #666; margin-bottom: 25px; font-size: 1em; line-height: 1.5; }
+
+        .modal-pergunta-botoes {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .modal-pergunta-botoes button { width: 100%; margin: 0; padding: 14px; font-size: 1em; }
+        .btn-continuar { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); }
+        .btn-trocar { background: linear-gradient(135deg, #e17055 0%, #d63031 100%); }
+        .btn-lobby { background: linear-gradient(135deg, #636e72 0%, #2d3436 100%); }
+
+        /* ===== AVISO DE QUEM COMEÇA ===== */
+        .aviso-comeca {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 40;
+        }
+        .aviso-comeca.ativo { display: flex; }
+
+        .aviso-comeca-conteudo {
+            background: white;
+            padding: 40px 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            animation: bounceIn 0.6s ease;
+            max-width: 400px;
+            width: 90%;
+        }
+        .aviso-comeca-avatar {
+            font-size: 4em;
+            line-height: 1;
+            margin-bottom: 10px;
+            display: block;
+            animation: pulse 1s ease-in-out infinite alternate;
+        }
+        .aviso-comeca-conteudo h2 {
+            color: #667eea;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+        .aviso-comeca-conteudo .nome-destaque {
+            color: #333;
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        .aviso-comeca-conteudo .contagem {
+            font-size: 3em;
+            color: #e74c3c;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* ===== BRUXA ===== */
+        .bruxa {
+            position: fixed;
+            top: 0; left: -200px;
+            font-size: 100px;
+            z-index: 30;
+            display: none;
+            pointer-events: none;
+            filter: drop-shadow(0 0 20px rgba(255, 100, 255, 0.8));
+            animation: voarBruxa 4s linear forwards;
+        }
+        .bruxa.ativa { display: block; }
+
+        @keyframes voarBruxa {
+            0% { left: -200px; top: 30%; transform: rotate(-10deg); }
+            25% { top: 20%; transform: rotate(5deg); }
+            50% { top: 35%; transform: rotate(-5deg); }
+            75% { top: 25%; transform: rotate(8deg); }
+            100% { left: 110%; top: 30%; transform: rotate(-10deg); }
+        }
+
+        .fundo-bruxa {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(50, 0, 80, 0.85) 0%, rgba(0, 0, 0, 0.95) 100%);
+            z-index: 25;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .fundo-bruxa.ativo { display: block; opacity: 1; }
+
+        .texto-bruxa {
+            position: fixed;
+            top: 60%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 3em;
+            color: #b94fff;
+            font-weight: bold;
+            text-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff, 0 0 60px #ff00ff;
+            z-index: 30;
+            display: none;
+            text-align: center;
+            letter-spacing: 5px;
+        }
+        .texto-bruxa.ativo { display: block; animation: aparecerTexto 0.8s ease forwards; }
+
+        @keyframes aparecerTexto {
+            from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fireworks"></canvas>
+
+    <div class="fundo-bruxa" id="fundoBruxa"></div>
+    <div class="bruxa" id="bruxa">🧙‍♀️</div>
+    <div class="texto-bruxa" id="textoBruxa">🐔 A VELHA GANHOU! 🧙‍♀️</div>
+
+    <div class="modal-parabens" id="modalParabens">
+        <div class="modal-conteudo">
+            <span class="avatar-vencedor" id="avatarVencedor">🏆</span>
+            <h2>🎉 PARABÉNS! 🎉</h2>
+            <p id="mensagemVencedor">O jogador venceu!</p>
+        </div>
+    </div>
+
+    <div class="aviso-comeca" id="avisoComeca">
+        <div class="aviso-comeca-conteudo">
+            <span class="aviso-comeca-avatar" id="avatarComeca">🎯</span>
+            <h2>Vai começar:</h2>
+            <div class="nome-destaque" id="nomeComeca">Jogador X</div>
+            <div class="contagem" id="contagemComeca">3</div>
+        </div>
+    </div>
+
+    <div class="modal-pergunta" id="modalPergunta">
+        <div class="modal-pergunta-conteudo">
+            <h2>🤔 O que deseja fazer?</h2>
+            <p>Escolha uma opção para continuar.</p>
+            <div class="modal-pergunta-botoes">
+                <button class="btn-continuar" onclick="continuarMesmosJogadores()">
+                    🔄 Continuar com os mesmos jogadores
+                </button>
+                <button class="btn-trocar" onclick="trocarJogadores()">
+                    👥 Trocar de jogadores (zera placar)
+                </button>
+                <button class="btn-lobby" onclick="voltarLobbyDoModal()">
+                    🏠 Voltar ao Lobby
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TELA INICIAL (LOBBY) -->
+    <div class="tela-inicial ativo" id="telaInicial">
+        <h1>🎮 Jogo da Velha</h1>
+
+        <!-- ABAS -->
+        <div class="abas">
+            <button class="aba ativa" onclick="mudarAba('rapido')" id="abaRapido">⚡ Rápido</button>
+            <button class="aba" onclick="mudarAba('personagens')" id="abaPersonagens">🎭 Personagens</button>
+            <button class="aba" onclick="mudarAba('treinamento')" id="abaTreinamento">🤖 Treinamento</button>
+        </div>
+
+        <!-- ABA: JOGO RÁPIDO -->
+        <div class="conteudo-aba ativo" id="conteudoRapido">
+            <div class="campo">
+                <label for="nomeX"><span class="simbolo x">✖</span> Nome do Jogador X (Cruz):</label>
+                <input type="text" id="nomeX" placeholder="Digite o nome do jogador X" maxlength="20">
+            </div>
+            <div class="campo">
+                <label for="nomeO"><span class="simbolo o">⭕</span> Nome do Jogador O (Bolinha):</label>
+                <input type="text" id="nomeO" placeholder="Digite o nome do jogador O" maxlength="20">
+            </div>
+            <button class="btn-iniciar" onclick="iniciarJogoRapido()">Começar Jogo Rápido</button>
+        </div>
+
+        <!-- ABA: PERSONAGENS -->
+        <div class="conteudo-aba" id="conteudoPersonagens">
+            <div class="criar-personagem">
+                <div class="campo">
+                    <label for="nomePersonagem">🎭 Nome do Personagem:</label>
+                    <input type="text" id="nomePersonagem" placeholder="Ex: Mago Supremo" maxlength="20">
+                </div>
+
+                <div class="campo">
+                    <label>😀 Escolha um Avatar:</label>
+                    <div class="seletor-avatar" id="seletorAvatar"></div>
+                </div>
+
+                <button onclick="criarPersonagem()" style="width: 100%;">➕ Criar Personagem</button>
+
+                <div class="campo" style="margin-top: 15px;">
+                    <label>📋 Seus Personagens:</label>
+                    <div class="lista-personagens" id="listaPersonagens">
+                        <div class="lista-vazia">Nenhum personagem criado ainda...</div>
+                    </div>
+                </div>
+
+                <div class="info-selecao" id="infoSelecao">
+                    Selecione <span class="destaque">2 personagens</span> para jogar
+                </div>
+
+                <button class="btn-iniciar" id="btnIniciarPersonagens" onclick="iniciarJogoComPersonagens()" disabled>
+                    🎮 Começar Jogo com Personagens
+                </button>
+            </div>
+        </div>
+
+        <!-- ABA: TREINAMENTO CONTRA ROBÔ -->
+        <div class="conteudo-aba" id="conteudoTreinamento">
+            <div class="treinamento">
+                <div class="campo">
+                    <label for="nomeTreino">😀 Seu Nome:</label>
+                    <input type="text" id="nomeTreino" placeholder="Digite seu nome" maxlength="20">
+                </div>
+
+                <div class="campo">
+                    <label>🎯 Escolha seu Símbolo:</label>
+                    <div class="escolha-simbolo">
+                        <div class="simbolo-opcao x selecionado" id="simboloX" onclick="escolherSimbolo('X')">
+                            <span class="s-emoji">✖</span>
+                            <span class="s-label">Sou X (começo)</span>
+                        </div>
+                        <div class="simbolo-opcao o" id="simboloO" onclick="escolherSimbolo('O')">
+                            <span class="s-emoji">⭕</span>
+                            <span class="s-label">Sou O (robo começa)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="campo">
+                    <label>🤖 Nível de Dificuldade do Robô:</label>
+                    <div class="dificuldades">
+                        <div class="dificuldade-card facil" data-nivel="facil" onclick="escolherDificuldade('facil')">
+                            <div class="dificuldade-icone">😊</div>
+                            <div class="dificuldade-info">
+                                <div class="dificuldade-nome">Fácil</div>
+                                <div class="dificuldade-desc">O robô joga aleatoriamente. Bom para iniciantes!</div>
+                            </div>
+                        </div>
+
+                        <div class="dificuldade-card medio selecionada" data-nivel="medio" onclick="escolherDificuldade('medio')">
+                            <div class="dificuldade-icone">😐</div>
+                            <div class="dificuldade-info">
+                                <div class="dificuldade-nome">Médio</div>
+                                <div class="dificuldade-desc">O robô bloqueia suas jogadas e busca vitória.</div>
+                            </div>
+                        </div>
+
+                        <div class="dificuldade-card dificil" data-nivel="dificil" onclick="escolherDificuldade('dificil')">
+                            <div class="dificuldade-icone">😈</div>
+                            <div class="dificuldade-info">
+                                <div class="dificuldade-nome">Difícil</div>
+                                <div class="dificuldade-desc">Robô imbatível! Use o algoritmo Minimax.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-iniciar" onclick="iniciarTreinamento()">🤖 Começar Treinamento</button>
+            </div>
+        </div>
+
+        <!-- RANK NO LOBBY -->
+        <div class="rank-container">
+            <h2>🏆 Rank dos Campeões</h2>
+            <div class="rank-lista" id="rankLista">
+                <div class="rank-vazio">Nenhuma vitória registrada ainda...</div>
+            </div>
+            <button class="btn-limpar-rank" onclick="limparRank()">🗑️ Limpar Rank</button>
+        </div>
+    </div>
+
+    <!-- TELA DO JOGO -->
+    <div class="container" id="containerJogo">
+        <h1>🎮 Jogo da Velha</h1>
+
+        <div class="badge-robo" id="badgeRobo" style="display:none;">
+            🤖 Treinamento contra o Robô
+        </div>
+
+        <div class="rank-jogo">
+            <h3>🏆 Rank dos Campeões</h3>
+            <div class="rank-lista" id="rankListaJogo">
+                <div class="rank-vazio">Nenhuma vitória registrada ainda...</div>
+            </div>
+        </div>
+
+        <div class="placar">
+            <div class="placar-item x" id="placarX">
+                <div class="avatar-placar" id="avatarPlacarX">✖</div>
+                <div class="rotulo" id="rotuloX">✖ Jogador X</div>
+                <div class="pontos" id="pontosX">0</div>
+            </div>
+            <div class="placar-item velha" id="placarVelha">
+                <div class="avatar-placar">🧙‍♀️</div>
+                <div class="rotulo">A Velha</div>
+                <div class="pontos" id="pontosVelha">0</div>
+            </div>
+            <div class="placar-item o" id="placarO">
+                <div class="avatar-placar" id="avatarPlacarO">⭕</div>
+                <div class="rotulo" id="rotuloO">⭕ Jogador O</div>
+                <div class="pontos" id="pontosO">0</div>
+            </div>
+        </div>
+
+        <div class="robo-pensando" id="roboPensando">
+            🤖 Robô pensando
+            <span class="dot"></span>
+            <span class="dot"></span>
+            <span class="dot"></span>
+        </div>
+
+        <div class="status" id="status">
+            <span class="status-avatar" id="statusAvatar">✖</span>
+            <span id="statusTexto">Vez do jogador: X</span>
+        </div>
+
+        <div class="board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <div class="botoes-jogo">
+            <button onclick="reiniciarJogo()">🔄 Reiniciar Jogo</button>
+            <button class="btn-voltar-lobby" onclick="voltarLobby()">🏠 Voltar ao Lobby</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== REFERÊNCIAS =====
+        const cells = document.querySelectorAll('.cell');
+        const status = document.getElementById('status');
+        const statusAvatar = document.getElementById('statusAvatar');
+        const statusTexto = document.getElementById('statusTexto');
+        const canvas = document.getElementById('fireworks');
+        const ctx = canvas.getContext('2d');
+        const modalParabens = document.getElementById('modalParabens');
+        const mensagemVencedor = document.getElementById('mensagemVencedor');
+        const avatarVencedor = document.getElementById('avatarVencedor');
+        const modalPergunta = document.getElementById('modalPergunta');
+        const avisoComeca = document.getElementById('avisoComeca');
+        const avatarComeca = document.getElementById('avatarComeca');
+        const nomeComecaEl = document.getElementById('nomeComeca');
+        const contagemComecaEl = document.getElementById('contagemComeca');
+        const telaInicial = document.getElementById('telaInicial');
+        const containerJogo = document.getElementById('containerJogo');
+        const inputNomeX = document.getElementById('nomeX');
+        const inputNomeO = document.getElementById('nomeO');
+        const inputNomePersonagem = document.getElementById('nomePersonagem');
+        const inputNomeTreino = document.getElementById('nomeTreino');
+        const seletorAvatar = document.getElementById('seletorAvatar');
+        const listaPersonagens = document.getElementById('listaPersonagens');
+        const infoSelecao = document.getElementById('infoSelecao');
+        const btnIniciarPersonagens = document.getElementById('btnIniciarPersonagens');
+        const badgeRobo = document.getElementById('badgeRobo');
+        const roboPensando = document.getElementById('roboPensando');
+        const bruxa = document.getElementById('bruxa');
+        const fundoBruxa = document.getElementById('fundoBruxa');
+        const textoBruxa = document.getElementById('textoBruxa');
+        const rankLista = document.getElementById('rankLista');
+        const rankListaJogo = document.getElementById('rankListaJogo');
+
+        const pontosXEl = document.getElementById('pontosX');
+        const pontosOEl = document.getElementById('pontosO');
+        const pontosVelhaEl = document.getElementById('pontosVelha');
+        const rotuloXEl = document.getElementById('rotuloX');
+        const rotuloOEl = document.getElementById('rotuloO');
+        const avatarPlacarX = document.getElementById('avatarPlacarX');
+        const avatarPlacarO = document.getElementById('avatarPlacarO');
+        const placarXEl = document.getElementById('placarX');
+        const placarOEl = document.getElementById('placarO');
+        const placarVelhaEl = document.getElementById('placarVelha');
+
+        // ===== ESTADO =====
+        let estadoJogo = ['', '', '', '', '', '', '', '', ''];
+        let jogadorAtual = 'X';
+        let jogadorQueComeca = 'X';
+        let jogoAtivo = false;
+        let timerModal = null;
+        let timerBruxa = null;
+        let timerPergunta = null;
+        let intervaloFogos = null;
+
+        let pontosX = 0;
+        let pontosO = 0;
+        let pontosVelha = 0;
+
+        let nomeJogadorX = 'Jogador X';
+        let nomeJogadorO = 'Jogador O';
+        let avatarJogadorX = '✖';
+        let avatarJogadorO = '⭕';
+
+        let selecaoPersonagens = { X: null, O: null };
+
+        // ===== MODO TREINAMENTO =====
+        let modoTreinamento = false;
+        let dificuldadeRobo = 'medio';
+        let simboloHumano = 'X'; // qual símbolo o humano escolheu no treinamento
+        let roboPensandoAgora = false;
+
+        // ===== AVATARES =====
+        const avataresDisponiveis = [
+            '😀', '😎', '🤖', '👽', '🐶', '🐱',
+            '🦊', '🐼', '🐯', '🦁', '🐸', '🐵',
+            '🧙', '🧙‍♀️', '🧚', '🧛', '🧜', '🦸',
+            '🦹', '👑', '👻', '💀', '🤡', '👹',
+            '🐲', '🦄', '🐺', '🦉', '🦅', '🐢'
+        ];
+
+        let avatarSelecionado = avataresDisponiveis[0];
+
+        // ===== ARMAZENAMENTO =====
+        let storageDisponivel = true;
+        let rankEmMemoria = {};
+        let personagensEmMemoria = [];
+
+        try {
+            localStorage.setItem('__teste__', '1');
+            localStorage.removeItem('__teste__');
+        } catch (e) {
+            storageDisponivel = false;
+        }
+
+        function carregarRank() {
+            if (storageDisponivel) {
+                try {
+                    const dados = localStorage.getItem('jv_rank');
+                    return dados ? JSON.parse(dados) : {};
+                } catch (e) { return {}; }
+            }
+            return rankEmMemoria;
+        }
+
+        function salvarRank(rank) {
+            if (storageDisponivel) {
+                try { localStorage.setItem('jv_rank', JSON.stringify(rank)); }
+                catch (e) {}
+            } else {
+                rankEmMemoria = rank;
+            }
+        }
+
+        function carregarPersonagens() {
+            if (storageDisponivel) {
+                try {
+                    const dados = localStorage.getItem('jv_personagens');
+                    return dados ? JSON.parse(dados) : [];
+                } catch (e) { return []; }
+            }
+            return personagensEmMemoria;
+        }
+
+        function salvarPersonagens(personagens) {
+            if (storageDisponivel) {
+                try { localStorage.setItem('jv_personagens', JSON.stringify(personagens)); }
+                catch (e) {}
+            } else {
+                personagensEmMemoria = personagens;
+            }
+        }
+
+        // ===== RANK =====
+        function registrarVitoria(nome, avatar) {
+            if (!nome) return;
+            const rank = carregarRank();
+            if (!rank[nome]) {
+                rank[nome] = { vitorias: 0, avatar: avatar || '🏆' };
+            }
+            rank[nome].vitorias = (rank[nome].vitorias || 0) + 1;
+            if (avatar) rank[nome].avatar = avatar;
+            salvarRank(rank);
+        }
+
+        function gerarHtmlRank() {
+            const rank = carregarRank();
+            const lista = Object.entries(rank)
+                .map(([nome, dados]) => {
+                    if (typeof dados === 'number') {
+                        return { nome, vitorias: dados, avatar: '🏆' };
+                    }
+                    return { nome, vitorias: dados.vitorias, avatar: dados.avatar || '🏆' };
+                })
+                .sort((a, b) => b.vitorias - a.vitorias);
+
+            if (lista.length === 0) {
+                return '<div class="rank-vazio">Nenhuma vitória registrada ainda...</div>';
+            }
+
+            let html = '';
+            lista.forEach((jogador, i) => {
+                let classes = 'rank-item';
+                if (i === 0) classes += ' primeiro';
+                else if (i === 1) classes += ' segundo';
+                else if (i === 2) classes += ' terceiro';
+
+                let emoji = '';
+                if (i === 0) emoji = '🥇';
+                else if (i === 1) emoji = '🥈';
+                else if (i === 2) emoji = '🥉';
+                else emoji = (i + 1) + 'º';
+
+                html += `
+                    <div class="${classes}">
+                        <div class="rank-posicao">${emoji}</div>
+                        <div class="rank-avatar">${jogador.avatar}</div>
+                        <div class="rank-nome">${escapeHtml(jogador.nome)}</div>
+                        <div class="rank-vitorias">${jogador.vitorias} <span>${jogador.vitorias === 1 ? 'vitória' : 'vitórias'}</span></div>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        function atualizarRank() {
+            const html = gerarHtmlRank();
+            rankLista.innerHTML = html;
+            rankListaJogo.innerHTML = html;
+        }
+
+        function limparRank() {
+            if (!confirm('Tem certeza que deseja apagar o rank de todos os jogadores?')) return;
+            salvarRank({});
+            atualizarRank();
+        }
+
+        function escapeHtml(texto) {
+            const div = document.createElement('div');
+            div.textContent = texto;
+            return div.innerHTML;
+        }
+
+        // ===== ABAS =====
+        function mudarAba(aba) {
+            document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
+            document.querySelectorAll('.conteudo-aba').forEach(c => c.classList.remove('ativo'));
+
+            if (aba === 'rapido') {
+                document.getElementById('abaRapido').classList.add('ativa');
+                document.getElementById('conteudoRapido').classList.add('ativo');
+            } else if (aba === 'personagens') {
+                document.getElementById('abaPersonagens').classList.add('ativa');
+                document.getElementById('conteudoPersonagens').classList.add('ativo');
+            } else {
+                document.getElementById('abaTreinamento').classList.add('ativa');
+                document.getElementById('conteudoTreinamento').classList.add('ativo');
+            }
+        }
+
+        // ===== SISTEMA DE PERSONAGENS =====
+        function renderizarAvatares() {
+            seletorAvatar.innerHTML = '';
+            avataresDisponiveis.forEach(av => {
+                const div = document.createElement('div');
+                div.className = 'avatar-opcao' + (av === avatarSelecionado ? ' selecionado' : '');
+                div.textContent = av;
+                div.onclick = () => {
+                    avatarSelecionado = av;
+                    renderizarAvatares();
+                };
+                seletorAvatar.appendChild(div);
+            });
+        }
+
+        function criarPersonagem() {
+            const nome = inputNomePersonagem.value.trim();
+            if (nome === '') {
+                inputNomePersonagem.classList.add('erro');
+                setTimeout(() => inputNomePersonagem.classList.remove('erro'), 1000);
+                return;
+            }
+
+            const personagens = carregarPersonagens();
+
+            if (personagens.some(p => p.nome.toLowerCase() === nome.toLowerCase())) {
+                alert('Já existe um personagem com esse nome!');
+                return;
+            }
+
+            personagens.push({
+                nome: nome,
+                avatar: avatarSelecionado,
+                id: Date.now()
+            });
+
+            salvarPersonagens(personagens);
+            inputNomePersonagem.value = '';
+            renderizarListaPersonagens();
+        }
+
+        function removerPersonagem(id, event) {
+            event.stopPropagation();
+            if (!confirm('Remover este personagem?')) return;
+
+            let personagens = carregarPersonagens();
+            personagens = personagens.filter(p => p.id !== id);
+            salvarPersonagens(personagens);
+
+            if (selecaoPersonagens.X && selecaoPersonagens.X.id === id) selecaoPersonagens.X = null;
+            if (selecaoPersonagens.O && selecaoPersonagens.O.id === id) selecaoPersonagens.O = null;
+
+            renderizarListaPersonagens();
+        }
+
+        function selecionarPersonagem(id) {
+            const personagens = carregarPersonagens();
+            const personagem = personagens.find(p => p.id === id);
+            if (!personagem) return;
+
+            if (selecaoPersonagens.X && selecaoPersonagens.X.id === id) {
+                selecaoPersonagens.X = null;
+            } else if (selecaoPersonagens.O && selecaoPersonagens.O.id === id) {
+                selecaoPersonagens.O = null;
+            } else {
+                if (!selecaoPersonagens.X) {
+                    selecaoPersonagens.X = personagem;
+                } else if (!selecaoPersonagens.O) {
+                    selecaoPersonagens.O = personagem;
+                } else {
+                    selecaoPersonagens.X = selecaoPersonagens.O;
+                    selecaoPersonagens.O = personagem;
+                }
+            }
+
+            renderizarListaPersonagens();
+        }
+
+        function renderizarListaPersonagens() {
+            const personagens = carregarPersonagens();
+            const rank = carregarRank();
+
+            if (personagens.length === 0) {
+                listaPersonagens.innerHTML = '<div class="lista-vazia">Nenhum personagem criado ainda...</div>';
+                atualizarInfoSelecao();
+                return;
+            }
+
+            listaPersonagens.innerHTML = '';
+            personagens.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'personagem-card';
+
+                if (selecaoPersonagens.X && selecaoPersonagens.X.id === p.id) card.classList.add('selecionado');
+                if (selecaoPersonagens.O && selecaoPersonagens.O.id === p.id) card.classList.add('selecionado');
+
+                let vitorias = 0;
+                if (rank[p.nome]) {
+                    vitorias = typeof rank[p.nome] === 'number' ? rank[p.nome] : rank[p.nome].vitorias;
+                }
+
+                card.innerHTML = `
+                    <div class="p-avatar">${p.avatar}</div>
+                    <div class="p-info">
+                        <div class="p-nome">${escapeHtml(p.nome)}</div>
+                        <div class="p-vitorias">🏆 ${vitorias} ${vitorias === 1 ? 'vitória' : 'vitórias'}</div>
+                    </div>
+                    <button class="p-remover" title="Remover">✕</button>
+                `;
+
+                card.onclick = () => selecionarPersonagem(p.id);
+                card.querySelector('.p-remover').onclick = (e) => removerPersonagem(p.id, e);
+
+                listaPersonagens.appendChild(card);
+            });
+
+            atualizarInfoSelecao();
+        }
+
+        function atualizarInfoSelecao() {
+            const nomeX = selecaoPersonagens.X ? selecaoPersonagens.X.nome : '—';
+            const nomeO = selecaoPersonagens.O ? selecaoPersonagens.O.nome : '—';
+
+            infoSelecao.innerHTML = `
+                <strong>Seleção atual:</strong><br>
+                ✖ X: <span class="destaque">${escapeHtml(nomeX)}</span> &nbsp;|&nbsp;
+                ⭕ O: <span class="destaque">${escapeHtml(nomeO)}</span>
+            `;
+
+            btnIniciarPersonagens.disabled = !(selecaoPersonagens.X && selecaoPersonagens.O);
+        }
+
+        // ===== TREINAMENTO =====
+        function escolherDificuldade(nivel) {
+            dificuldadeRobo = nivel;
+            document.querySelectorAll('.dificuldade-card').forEach(c => {
+                c.classList.remove('selecionada');
+                if (c.dataset.nivel === nivel) c.classList.add('selecionada');
+            });
+        }
+
+        function escolherSimbolo(simbolo) {
+            simboloHumano = simbolo;
+            document.getElementById('simboloX').classList.remove('selecionado');
+            document.getElementById('simboloO').classList.remove('selecionado');
+            if (simbolo === 'X') {
+                document.getElementById('simboloX').classList.add('selecionado');
+            } else {
+                document.getElementById('simboloO').classList.add('selecionado');
+            }
+        }
+
+        function iniciarTreinamento() {
+            const nome = inputNomeTreino.value.trim();
+            if (nome === '') {
+                inputNomeTreino.classList.add('erro');
+                setTimeout(() => inputNomeTreino.classList.remove('erro'), 1000);
+                return;
+            }
+
+            modoTreinamento = true;
+
+            const simboloRobo = simboloHumano === 'X' ? 'O' : 'X';
+
+            if (simboloHumano === 'X') {
+                nomeJogadorX = nome;
+                avatarJogadorX = '😀';
+                nomeJogadorO = 'Robô ' + labelDificuldade();
+                avatarJogadorO = '🤖';
+            } else {
+                nomeJogadorX = 'Robô ' + labelDificuldade();
+                avatarJogadorX = '🤖';
+                nomeJogadorO = nome;
+                avatarJogadorO = '😀';
+            }
+
+            iniciarPartida();
+        }
+
+        function labelDificuldade() {
+            if (dificuldadeRobo === 'facil') return '(Fácil)';
+            if (dificuldadeRobo === 'medio') return '(Médio)';
+            return '(Difícil)';
+        }
+
+        // ===== INICIAR JOGO =====
+        function iniciarJogoComPersonagens() {
+            if (!selecaoPersonagens.X || !selecaoPersonagens.O) return;
+
+            modoTreinamento = false;
+            nomeJogadorX = selecaoPersonagens.X.nome;
+            nomeJogadorO = selecaoPersonagens.O.nome;
+            avatarJogadorX = selecaoPersonagens.X.avatar;
+            avatarJogadorO = selecaoPersonagens.O.avatar;
+
+            iniciarPartida();
+        }
+
+        function iniciarJogoRapido() {
+            const nomeX = inputNomeX.value.trim();
+            const nomeO = inputNomeO.value.trim();
+
+            let erro = false;
+            if (nomeX === '') {
+                inputNomeX.classList.add('erro');
+                setTimeout(() => inputNomeX.classList.remove('erro'), 1000);
+                erro = true;
+            }
+            if (nomeO === '') {
+                inputNomeO.classList.add('erro');
+                setTimeout(() => inputNomeO.classList.remove('erro'), 1000);
+                erro = true;
+            }
+            if (erro) return;
+
+            modoTreinamento = false;
+            nomeJogadorX = nomeX;
+            nomeJogadorO = nomeO;
+            avatarJogadorX = '✖';
+            avatarJogadorO = '⭕';
+
+            iniciarPartida();
+        }
+
+        function iniciarPartida() {
+            rotuloXEl.textContent = '✖ ' + nomeJogadorX;
+            rotuloOEl.textContent = '⭕ ' + nomeJogadorO;
+            avatarPlacarX.textContent = avatarJogadorX;
+            avatarPlacarO.textContent = avatarJogadorO;
+
+            // Define quem começa
+            // No modo treinamento: quem escolheu X começa
+            if (modoTreinamento) {
+                jogadorQueComeca = 'X';
+            } else {
+                jogadorQueComeca = 'X';
+            }
+            jogadorAtual = jogadorQueComeca;
+
+            // Badge do robô
+            badgeRobo.style.display = modoTreinamento ? 'inline-flex' : 'none';
+
+            telaInicial.classList.remove('ativo');
+            telaInicial.style.display = 'none';
+            containerJogo.classList.add('ativo');
+
+            limparTabuleiro();
+            jogoAtivo = false;
+            atualizarStatus();
+            atualizarRank();
+
+            mostrarAvisoComeca(() => {
+                jogoAtivo = true;
+                // Se o robô começa, faz a jogada dele
+                verificarVezRobo();
+            });
+        }
+
+        inputNomeX.addEventListener('keypress', e => { if (e.key === 'Enter') inputNomeO.focus(); });
+        inputNomeO.addEventListener('keypress', e => { if (e.key === 'Enter') iniciarJogoRapido(); });
+        inputNomePersonagem.addEventListener('keypress', e => { if (e.key === 'Enter') criarPersonagem(); });
+        inputNomeTreino.addEventListener('keypress', e => { if (e.key === 'Enter') iniciarTreinamento(); });
+
+        function atualizarStatus() {
+            const nome = jogadorAtual === 'X' ? nomeJogadorX : nomeJogadorO;
+            const avatar = jogadorAtual === 'X' ? avatarJogadorX : avatarJogadorO;
+            statusAvatar.textContent = avatar;
+            statusTexto.textContent = 'Vez de ' + nome + ' (' + jogadorAtual + ')';
+        }
+
+        // ===== AVISO DE QUEM COMEÇA =====
+        function mostrarAvisoComeca(callback) {
+            const nome = jogadorQueComeca === 'X' ? nomeJogadorX : nomeJogadorO;
+            const avatar = jogadorQueComeca === 'X' ? avatarJogadorX : avatarJogadorO;
+
+            avatarComeca.textContent = avatar;
+            nomeComecaEl.textContent = nome + ' (' + jogadorQueComeca + ')';
+
+            avisoComeca.classList.add('ativo');
+
+            let contagem = 3;
+            contagemComecaEl.textContent = contagem;
+
+            const intervaloC = setInterval(() => {
+                contagem--;
+                if (contagem > 0) {
+                    contagemComecaEl.textContent = contagem;
+                } else {
+                    contagemComecaEl.textContent = 'VAI!';
+                    clearInterval(intervaloC);
+                    setTimeout(() => {
+                        avisoComeca.classList.remove('ativo');
+                        if (callback) callback();
+                    }, 400);
+                }
+            }, 700);
+        }
+
+        // ===== CANVAS =====
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // ===== FOGOS =====
+        let particulas = [];
+        let animacaoAtiva = false;
+
+        class Particula {
+            constructor(x, y, cor) {
+                this.x = x; this.y = y; this.cor = cor;
+                const angulo = Math.random() * Math.PI * 2;
+                const velocidade = Math.random() * 5 + 2;
+                this.vx = Math.cos(angulo) * velocidade;
+                this.vy = Math.sin(angulo) * velocidade;
+                this.vida = 1;
+                this.decaimento = Math.random() * 0.015 + 0.01;
+                this.tamanho = Math.random() * 3 + 2;
+            }
+            atualizar() {
+                this.x += this.vx; this.y += this.vy;
+                this.vy += 0.05; this.vx *= 0.98; this.vy *= 0.98;
+                this.vida -= this.decaimento;
+            }
+            desenhar() {
+                ctx.save();
+                ctx.globalAlpha = this.vida;
+                ctx.fillStyle = this.cor;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.cor;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.tamanho, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function criarExplosao(x, y) {
+            const cores = ['#ff3838', '#ff9f1a', '#ffd32a', '#32ff7e', '#18dcff', '#7d5fff', '#ff4d4d', '#f368e0'];
+            const cor = cores[Math.floor(Math.random() * cores.length)];
+            for (let i = 0; i < 60; i++) {
+                particulas.push(new Particula(x, y, cor));
+            }
+        }
+
+        function loopFogos() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = particulas.length - 1; i >= 0; i--) {
+                particulas[i].atualizar();
+                particulas[i].desenhar();
+                if (particulas[i].vida <= 0) particulas.splice(i, 1);
+            }
+
+            if (animacaoAtiva || particulas.length > 0) {
+                requestAnimationFrame(loopFogos);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+
+        function iniciarFogos() {
+            canvas.style.display = 'block';
+            animacaoAtiva = true;
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    criarExplosao(
+                        Math.random() * canvas.width * 0.8 + canvas.width * 0.1,
+                        Math.random() * canvas.height * 0.6 + canvas.height * 0.1
+                    );
+                }, i * 150);
+            }
+            intervaloFogos = setInterval(() => {
+                if (!animacaoAtiva) { clearInterval(intervaloFogos); return; }
+                criarExplosao(
+                    Math.random() * canvas.width * 0.8 + canvas.width * 0.1,
+                    Math.random() * canvas.height * 0.6 + canvas.height * 0.1
+                );
+            }, 300);
+            loopFogos();
+        }
+
+        function pararFogos() {
+            animacaoAtiva = false;
+            if (intervaloFogos) { clearInterval(intervaloFogos); intervaloFogos = null; }
+            if (timerModal) { clearTimeout(timerModal); timerModal = null; }
+            canvas.style.display = 'none';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particulas = [];
+            modalParabens.classList.remove('ativo');
+        }
+
+        // ===== RISADA DE BRUXA =====
+        function tocarRisadaBruxa() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                const audioCtx = new AudioCtx();
+                const agora = audioCtx.currentTime;
+
+                const gargalhadas = [
+                    { freq: 320, delay: 0.0, dur: 0.35 },
+                    { freq: 280, delay: 0.35, dur: 0.35 },
+                    { freq: 250, delay: 0.7, dur: 0.35 },
+                    { freq: 220, delay: 1.05, dur: 0.4 },
+                    { freq: 190, delay: 1.45, dur: 0.45 },
+                    { freq: 160, delay: 1.9, dur: 0.55 }
+                ];
+
+                gargalhadas.forEach(g => {
+                    const osc = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+                    const filter = audioCtx.createBiquadFilter();
+
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(g.freq * 1.4, agora + g.delay);
+                    osc.frequency.exponentialRampToValueAtTime(g.freq * 0.7, agora + g.delay + g.dur);
+
+                    const vibrato = audioCtx.createOscillator();
+                    const vibratoGain = audioCtx.createGain();
+                    vibrato.frequency.value = 18;
+                    vibratoGain.gain.value = 25;
+                    vibrato.connect(vibratoGain);
+                    vibratoGain.connect(osc.frequency);
+                    vibrato.start(agora + g.delay);
+                    vibrato.stop(agora + g.delay + g.dur);
+
+                    filter.type = 'bandpass';
+                    filter.frequency.value = g.freq * 1.5;
+                    filter.Q.value = 1.5;
+
+                    gainNode.gain.setValueAtTime(0, agora + g.delay);
+                    gainNode.gain.linearRampToValueAtTime(0.25, agora + g.delay + 0.05);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, agora + g.delay + g.dur);
+
+                    osc.connect(filter);
+                    filter.connect(gainNode);
+                    gainNode.connect(audioCtx.destination);
+                    osc.start(agora + g.delay);
+                    osc.stop(agora + g.delay + g.dur);
+                });
+            } catch (e) {}
+        }
+
+        // ===== BRUXA =====
+        function mostrarBruxa() {
+            fundoBruxa.classList.add('ativo');
+            bruxa.classList.remove('ativa');
+            void bruxa.offsetWidth;
+            bruxa.classList.add('ativa');
+            textoBruxa.classList.remove('ativo');
+            void textoBruxa.offsetWidth;
+            textoBruxa.classList.add('ativo');
+            tocarRisadaBruxa();
+
+            if (timerBruxa) clearTimeout(timerBruxa);
+            timerBruxa = setTimeout(() => {
+                bruxa.classList.remove('ativa');
+                textoBruxa.classList.remove('ativo');
+                fundoBruxa.classList.remove('ativo');
+            }, 4000);
+        }
+
+        function pararBruxa() {
+            if (timerBruxa) { clearTimeout(timerBruxa); timerBruxa = null; }
+            bruxa.classList.remove('ativa');
+            textoBruxa.classList.remove('ativo');
+            fundoBruxa.classList.remove('ativo');
+        }
+
+        // ===== PLACAR =====
+        function atualizarPlacar() {
+            pontosXEl.textContent = pontosX;
+            pontosOEl.textContent = pontosO;
+            pontosVelhaEl.textContent = pontosVelha;
+        }
+
+        function animarPlacar(el) {
+            el.classList.remove('pontuou');
+            void el.offsetWidth;
+            el.classList.add('pontuou');
+            setTimeout(() => el.classList.remove('pontuou'), 700);
+        }
+
+        // ===== COMBINAÇÕES =====
+        const combinacoesVitoria = [
+            [0,1,2],[3,4,5],[6,7,8],
+            [0,3,6],[1,4,7],[2,5,8],
+            [0,4,8],[2,4,6]
+        ];
+
+        // ===== INTELIGÊNCIA ARTIFICIAL DO ROBÔ =====
+
+        // Fácil: jogada aleatória
+        function jogadaFacil() {
+            const vazias = [];
+            estadoJogo.forEach((v, i) => { if (v === '') vazias.push(i); });
+            return vazias[Math.floor(Math.random() * vazias.length)];
+        }
+
+        // Médio: ganha se puder, bloqueia se necessário, senão aleatório
+        function jogadaMedia(simboloRobo, simboloHumano) {
+            // 1. Tenta ganhar
+            for (let combo of combinacoesVitoria) {
+                const [a, b, c] = combo;
+                const vals = [estadoJogo[a], estadoJogo[b], estadoJogo[c]];
+                const countRobo = vals.filter(v => v === simboloRobo).length;
+                const vazias = [a, b, c].filter(i => estadoJogo[i] === '');
+                if (countRobo === 2 && vazias.length === 1) {
+                    return vazias[0];
+                }
+            }
+
+            // 2. Tenta bloquear o humano
+            for (let combo of combinacoesVitoria) {
+                const [a, b, c] = combo;
+                const vals = [estadoJogo[a], estadoJogo[b], estadoJogo[c]];
+                const countHumano = vals.filter(v => v === simboloHumano).length;
+                const vazias = [a, b, c].filter(i => estadoJogo[i] === '');
+                if (countHumano === 2 && vazias.length === 1) {
+                    return vazias[0];
+                }
+            }
+
+            // 3. Prefere o centro
+            if (estadoJogo[4] === '') return 4;
+
+            // 4. Aleatório entre as vazias
+            const vazias = [];
+            estadoJogo.forEach((v, i) => { if (v === '') vazias.push(i); });
+            return vazias[Math.floor(Math.random() * vazias.length)];
+        }
+
+        // Difícil: Minimax (imbatível)
+        function jogadaDificil(simboloRobo, simboloHumano) {
+            let melhorPontuacao = -Infinity;
+            let melhorJogada = null;
+
+            for (let i = 0; i < 9; i++) {
+                if (estadoJogo[i] === '') {
+                    estadoJogo[i] = simboloRobo;
+                    const pontuacao = minimax(estadoJogo, 0, false, simboloRobo, simboloHumano);
+                    estadoJogo[i] = '';
+                    if (pontuacao > melhorPontuacao) {
+                        melhorPontuacao = pontuacao;
+                        melhorJogada = i;
+                    }
+                }
+            }
+            return melhorJogada;
+        }
+
+        function minimax(tabuleiro, profundidade, isMaximizando, simboloRobo, simboloHumano) {
+            const resultado = verificarVencedorTabuleiro(tabuleiro, simboloRobo, simboloHumano);
+            if (resultado !== null) {
+                if (resultado === simboloRobo) return 10 - profundidade;
+                if (resultado === simboloHumano) return profundidade - 10;
+                return 0; // empate
+            }
+
+            if (isMaximizando) {
+                let melhor = -Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (tabuleiro[i] === '') {
+                        tabuleiro[i] = simboloRobo;
+                        const pontos = minimax(tabuleiro, profundidade + 1, false, simboloRobo, simboloHumano);
+                        tabuleiro[i] = '';
+                        melhor = Math.max(melhor, pontos);
+                    }
+                }
+                return melhor;
+            } else {
+                let melhor = Infinity;
+                for (let i = 0; i < 9; i++) {
+                    if (tabuleiro[i] === '') {
+                        tabuleiro[i] = simboloHumano;
+                        const pontos = minimax(tabuleiro, profundidade + 1, true, simboloRobo, simboloHumano);
+                        tabuleiro[i] = '';
+                        melhor = Math.min(melhor, pontos);
+                    }
+                }
+                return melhor;
+            }
+        }
+
+        // Verifica vitória em um tabuleiro específico (para o minimax)
+        function verificarVencedorTabuleiro(tabuleiro, simboloRobo, simboloHumano) {
+            for (let combo of combinacoesVitoria) {
+                const [a, b, c] = combo;
+                if (tabuleiro[a] && tabuleiro[a] === tabuleiro[b] && tabuleiro[a] === tabuleiro[c]) {
+                    return tabuleiro[a];
+                }
+            }
+            if (tabuleiro.every(c => c !== '')) return 'empate';
+            return null;
+        }
+
+        // Executa a jogada do robô
+        function jogadaDoRobo() {
+            if (!modoTreinamento || !jogoAtivo) return;
+
+            const simboloRobo = simboloHumano === 'X' ? 'O' : 'X';
+
+            // Verifica se ainda tem espaços vazios
+            const vazias = estadoJogo.filter(v => v === '').length;
+            if (vazias === 0) return;
+
+            let index;
+            if (dificuldadeRobo === 'facil') {
+                index = jogadaFacil();
+            } else if (dificuldadeRobo === 'medio') {
+                index = jogadaMedia(simboloRobo, simboloHumano);
+            } else {
+                index = jogadaDificil(simboloRobo, simboloHumano);
+            }
+
+            if (index === undefined || index === null) return;
+
+            // Aplica a jogada
+            estadoJogo[index] = simboloRobo;
+            cells[index].textContent = simboloRobo;
+            cells[index].classList.add('taken', simboloRobo.toLowerCase());
+
+            // Verifica resultado
+            if (verificarVitoria()) {
+                const nomeVencedor = simboloRobo === 'X' ? nomeJogadorX : nomeJogadorO;
+                const avatarVencedorAtual = simboloRobo === 'X' ? avatarJogadorX : avatarJogadorO;
+                statusTexto.textContent = '🤖 ' + nomeVencedor + ' ganhou!';
+
+                if (simboloRobo === 'X') {
+                    pontosX++; atualizarPlacar(); animarPlacar(placarXEl);
+                } else {
+                    pontosO++; atualizarPlacar(); animarPlacar(placarOEl);
+                }
+
+                jogoAtivo = false;
+                // No treinamento, o robô NÃO entra no rank
+                setTimeout(() => {
+                    perguntarContinuarOuTrocar();
+                }, 1500);
+                return;
+            }
+
+            if (estadoJogo.every(c => c !== '')) {
+                statusTexto.textContent = '🧙‍♀️ A velha ganhou!';
+                statusAvatar.textContent = '🧙‍♀️';
+                pontosVelha++; atualizarPlacar(); animarPlacar(placarVelhaEl);
+                mostrarBruxa();
+                jogoAtivo = false;
+                setTimeout(() => {
+                    perguntarContinuarOuTrocar();
+                }, 4000);
+                return;
+            }
+
+            // Volta a vez para o humano
+            jogadorAtual = simboloHumano;
+            atualizarStatus();
+        }
+
+        // Verifica se é a vez do robô e joga
+        function verificarVezRobo() {
+            if (!modoTreinamento || !jogoAtivo) return;
+
+            const simboloRobo = simboloHumano === 'X' ? 'O' : 'X';
+
+            if (jogadorAtual === simboloRobo) {
+                roboPensando.classList.add('ativo');
+                roboPensandoAgora = true;
+
+                // Delay para simular "pensamento"
+                const delay = dificuldadeRobo === 'facil' ? 400 :
+                              dificuldadeRobo === 'medio' ? 600 : 900;
+
+                setTimeout(() => {
+                    roboPensando.classList.remove('ativo');
+                    roboPensandoAgora = false;
+                    jogadaDoRobo();
+                }, delay);
+            }
+        }
+
+        // ===== PARABÉNS =====
+        function mostrarParabens(mensagem, avatar) {
+            mensagemVencedor.textContent = mensagem;
+            avatarVencedor.textContent = avatar || '🏆';
+            modalParabens.classList.add('ativo');
+            iniciarFogos();
+
+            if (timerModal) clearTimeout(timerModal);
+            timerModal = setTimeout(() => {
+                modalParabens.classList.remove('ativo');
+                setTimeout(() => {
+                    animacaoAtiva = false;
+                    if (intervaloFogos) { clearInterval(intervaloFogos); intervaloFogos = null; }
+                }, 800);
+            }, 1500);
+        }
+
+        // ===== PERGUNTA =====
+        function perguntarContinuarOuTrocar() {
+            if (timerPergunta) clearTimeout(timerPergunta);
+            timerPergunta = setTimeout(() => {
+                modalPergunta.classList.add('ativo');
+            }, 2400);
+        }
+
+        function continuarMesmosJogadores() {
+            modalPergunta.classList.remove('ativo');
+            limparTabuleiro();
+
+            // No treinamento: sempre X começa (se humano é O, o robô começa)
+            if (modoTreinamento) {
+                jogadorQueComeca = 'X';
+            } else {
+                jogadorQueComeca = jogadorQueComeca === 'X' ? 'O' : 'X';
+            }
+            jogadorAtual = jogadorQueComeca;
+
+            jogoAtivo = false;
+            atualizarStatus();
+
+            mostrarAvisoComeca(() => {
+                jogoAtivo = true;
+                verificarVezRobo();
+            });
+        }
+
+        function trocarJogadores() {
+            modalPergunta.classList.remove('ativo');
+            pararFogos();
+            pararBruxa();
+            limparTabuleiro();
+
+            pontosX = 0;
+            pontosO = 0;
+            pontosVelha = 0;
+            atualizarPlacar();
+
+            jogadorQueComeca = 'X';
+            jogadorAtual = 'X';
+            jogoAtivo = false;
+
+            modoTreinamento = false;
+            selecaoPersonagens = { X: null, O: null };
+            renderizarListaPersonagens();
+            badgeRobo.style.display = 'none';
+
+            containerJogo.classList.remove('ativo');
+            telaInicial.style.display = 'block';
+            telaInicial.classList.add('ativo');
+
+            atualizarRank();
+        }
+
+        // ===== VOLTAR AO LOBBY =====
+        function voltarLobby() {
+            if (jogoAtivo && estadoJogo.some(c => c !== '')) {
+                if (!confirm('O jogo está em andamento. Deseja realmente sair para o lobby? O progresso será perdido.')) {
+                    return;
+                }
+            }
+            sairParaLobby();
+        }
+
+        function voltarLobbyDoModal() {
+            sairParaLobby();
+        }
+
+        function sairParaLobby() {
+            pararFogos();
+            pararBruxa();
+            if (timerPergunta) { clearTimeout(timerPergunta); timerPergunta = null; }
+            modalPergunta.classList.remove('ativo');
+            avisoComeca.classList.remove('ativo');
+            roboPensando.classList.remove('ativo');
+            roboPensandoAgora = false;
+
+            limparTabuleiro();
+
+            pontosX = 0;
+            pontosO = 0;
+            pontosVelha = 0;
+            atualizarPlacar();
+
+            jogadorQueComeca = 'X';
+            jogadorAtual = 'X';
+            jogoAtivo = false;
+            modoTreinamento = false;
+            badgeRobo.style.display = 'none';
+
+            containerJogo.classList.remove('ativo');
+            telaInicial.style.display = 'block';
+            telaInicial.classList.add('ativo');
+
+            atualizarRank();
+        }
+
+        // ===== CLIQUE =====
+        function handleClick(e) {
+            const cell = e.currentTarget;
+            const index = parseInt(cell.dataset.index);
+
+            if (!jogoAtivo) return;
+            if (estadoJogo[index] !== '') return;
+
+            // No treinamento: bloqueia cliques quando é a vez do robô
+            if (modoTreinamento) {
+                const simboloRobo = simboloHumano === 'X' ? 'O' : 'X';
+                if (jogadorAtual === simboloRobo) return;
+                if (roboPensandoAgora) return;
+            }
+
+            estadoJogo[index] = jogadorAtual;
+            cell.textContent = jogadorAtual;
+            cell.classList.add('taken', jogadorAtual.toLowerCase());
+
+            if (verificarVitoria()) {
+                const nomeVencedor = jogadorAtual === 'X' ? nomeJogadorX : nomeJogadorO;
+                const avatarVencedorAtual = jogadorAtual === 'X' ? avatarJogadorX : avatarJogadorO;
+                statusTexto.textContent = '🏆 ' + nomeVencedor + ' ganhou!';
+
+                if (jogadorAtual === 'X') {
+                    pontosX++; atualizarPlacar(); animarPlacar(placarXEl);
+                } else {
+                    pontosO++; atualizarPlacar(); animarPlacar(placarOEl);
+                }
+
+                // No treinamento: só registra no rank se o HUMANO venceu
+                if (modoTreinamento) {
+                    const simboloRobo = simboloHumano === 'X' ? 'O' : 'X';
+                    if (jogadorAtual !== simboloRobo) {
+                        // Humano venceu
+                        registrarVitoria(nomeVencedor, avatarVencedorAtual);
+                        atualizarRank();
+                        mostrarParabens('Você venceu o robô! 🏆', avatarVencedorAtual);
+                    } else {
+                        // Robô venceu - sem parabéns, sem rank
+                        mostrarParabens('O robô venceu! 🤖', '🤖');
+                    }
+                } else {
+                    registrarVitoria(nomeVencedor, avatarVencedorAtual);
+                    atualizarRank();
+                    mostrarParabens('O jogador "' + nomeVencedor + '" venceu! 🏆', avatarVencedorAtual);
+                }
+
+                jogoAtivo = false;
+                perguntarContinuarOuTrocar();
+                return;
+            }
+
+            if (estadoJogo.every(c => c !== '')) {
+                statusTexto.textContent = '🧙‍♀️ A velha ganhou!';
+                statusAvatar.textContent = '🧙‍♀️';
+                pontosVelha++; atualizarPlacar(); animarPlacar(placarVelhaEl);
+                mostrarBruxa();
+                jogoAtivo = false;
+                setTimeout(() => {
+                    perguntarContinuarOuTrocar();
+                }, 4000);
+                return;
+            }
+
+            jogadorAtual = jogadorAtual === 'X' ? 'O' : 'X';
+            atualizarStatus();
+
+            // Verifica se é a vez do robô
+            verificarVezRobo();
+        }
+
+        function verificarVitoria() {
+            for (let combo of combinacoesVitoria) {
+                const [a, b, c] = combo;
+                if (estadoJogo[a] && estadoJogo[a] === estadoJogo[b] && estadoJogo[a] === estadoJogo[c]) {
+                    cells[a].classList.add('winner');
+                    cells[b].classList.add('winner');
+                    cells[c].classList.add('winner');
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function limparTabuleiro() {
+            estadoJogo = ['', '', '', '', '', '', '', '', ''];
+            cells.forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('taken', 'x', 'o', 'winner');
+            });
+            pararFogos();
+            pararBruxa();
+            roboPensando.classList.remove('ativo');
+            roboPensandoAgora = false;
+        }
+
+        // ===== REINICIAR =====
+        function reiniciarJogo() {
+            modalPergunta.classList.add('ativo');
+        }
+
+        // ===== INICIALIZAÇÃO =====
+        cells.forEach(cell => cell.addEventListener('click', handleClick));
+
+        renderizarAvatares();
+        renderizarListaPersonagens();
+        atualizarRank();
+
+        telaInicial.classList.add('ativo');
+        telaInicial.style.display = 'block';
+    </script>
+</body>
+</html>
