@@ -238,7 +238,6 @@
             75% { transform: translateX(8px); }
         }
 
-        /* Campo código em maiúsculas */
         #codigoEntrar {
             text-transform: uppercase;
             letter-spacing: 3px;
@@ -483,7 +482,6 @@
             background: #ddd;
         }
 
-        /* Área de sala */
         .sala-aguardando {
             text-align: center;
             padding: 20px 0;
@@ -540,7 +538,6 @@
             to { opacity: 0.65; }
         }
 
-        /* Badge */
         .badge-info {
             display: inline-flex;
             align-items: center;
@@ -555,7 +552,6 @@
         }
         .badge-info.online { background: #e8fff5; color: #00b894; }
 
-        /* Pensando do robô */
         .robo-pensando {
             display: none;
             justify-content: center;
@@ -638,6 +634,14 @@
         .rank-item.terceiro {
             background: linear-gradient(135deg, #f5d0b0 0%, #e0a878 100%);
             border-left-color: #cd7f32;
+        }
+        .rank-item.novo {
+            animation: destacarNovo 1.5s ease;
+        }
+        @keyframes destacarNovo {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.7); }
+            50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(102, 126, 234, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(102, 126, 234, 0); }
         }
         .rank-posicao {
             font-weight: bold;
@@ -1037,7 +1041,6 @@
         <!-- ABA: ONLINE -->
         <div class="conteudo-aba" id="conteudoOnline">
             <div class="online">
-                <!-- Tela inicial do online -->
                 <div id="onlineInicio">
                     <div class="campo">
                         <label for="nomeOnline">👤 Seu nome:</label>
@@ -1069,7 +1072,6 @@
                     </div>
                 </div>
 
-                <!-- Tela aguardando conexão -->
                 <div id="onlineAguardando" style="display: none;">
                     <div class="sala-aguardando">
                         <h3 style="color: #667eea; margin-bottom: 10px;">⏳ Aguardando oponente...</h3>
@@ -1256,6 +1258,9 @@
         let minhaVezOnline = false;
         let jogoOnlineIniciado = false;
         let codigoSalaAtual = '';
+        let nomeOponenteOnline = '';
+        // Controle para não registrar vitória em duplicidade
+        let vitoriaJaRegistrada = false;
 
         // ===== AVATARES =====
         const avataresDisponiveis = [
@@ -1268,9 +1273,8 @@
 
         let avatarSelecionado = avataresDisponiveis[0];
 
-        // ===== GERADOR DE CÓDIGO DE SALA (8 LETRAS) =====
+        // ===== GERADOR DE CÓDIGO DE SALA =====
         function gerarCodigoSala() {
-            // Apenas letras e números, sem caracteres ambíguos (0, O, I, L, 1)
             const caracteres = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
             let codigo = '';
             for (let i = 0; i < 8; i++) {
@@ -1330,8 +1334,9 @@
         }
 
         // ===== RANK =====
+        // Retorna true se foi uma vitória nova
         function registrarVitoria(nome, avatar) {
-            if (!nome) return;
+            if (!nome) return false;
             const rank = carregarRank();
             if (!rank[nome]) {
                 rank[nome] = { vitorias: 0, avatar: avatar || '🏆' };
@@ -1339,9 +1344,10 @@
             rank[nome].vitorias = (rank[nome].vitorias || 0) + 1;
             if (avatar) rank[nome].avatar = avatar;
             salvarRank(rank);
+            return true;
         }
 
-        function gerarHtmlRank() {
+        function gerarHtmlRank(nomeNovo) {
             const rank = carregarRank();
             const lista = Object.entries(rank)
                 .map(([nome, dados]) => {
@@ -1362,6 +1368,8 @@
                 if (i === 0) classes += ' primeiro';
                 else if (i === 1) classes += ' segundo';
                 else if (i === 2) classes += ' terceiro';
+                // Destaque para o novo vencedor
+                if (nomeNovo && jogador.nome === nomeNovo) classes += ' novo';
 
                 let emoji = '';
                 if (i === 0) emoji = '🥇';
@@ -1381,8 +1389,9 @@
             return html;
         }
 
-        function atualizarRank() {
-            const html = gerarHtmlRank();
+        // Atualiza rank nos dois lugares, com opção de destacar um nome
+        function atualizarRank(nomeNovo) {
+            const html = gerarHtmlRank(nomeNovo);
             rankLista.innerHTML = html;
             rankListaJogo.innerHTML = html;
         }
@@ -1662,6 +1671,7 @@
 
             limparTabuleiro();
             jogoAtivo = false;
+            vitoriaJaRegistrada = false;
             atualizarStatus();
             atualizarRank();
 
@@ -2086,7 +2096,6 @@
             meuSimboloOnline = 'X';
             simboloOponenteOnline = 'O';
 
-            // Gera código de 8 letras
             codigoSalaAtual = gerarCodigoSala();
 
             document.getElementById('onlineInicio').style.display = 'none';
@@ -2097,15 +2106,12 @@
             statusOnline.textContent = 'Aguardando conexão...';
             statusOnline.className = 'status-online aguardando';
 
-            // Cria peer com o ID personalizado (código de 8 letras)
-            // Prefixo para evitar conflito com outros usuários do PeerJS
             const peerId = 'jv-sala-' + codigoSalaAtual;
 
             peer = new Peer(peerId);
 
             peer.on('open', (id) => {
                 console.log('Sala criada com ID:', id);
-                console.log('Código para compartilhar:', codigoSalaAtual);
             });
 
             peer.on('connection', (conn) => {
@@ -2116,12 +2122,10 @@
             peer.on('error', (err) => {
                 console.error('Erro:', err);
                 if (err.type === 'unavailable-id') {
-                    // Código já em uso, gera outro
                     console.log('Código em uso, gerando outro...');
                     if (peer) peer.destroy();
                     codigoSalaAtual = gerarCodigoSala();
                     document.getElementById('codigoExibir').textContent = codigoSalaAtual;
-                    // Tenta novamente
                     setTimeout(() => {
                         const novoPeerId = 'jv-sala-' + codigoSalaAtual;
                         peer = new Peer(novoPeerId);
@@ -2229,8 +2233,6 @@
             });
         }
 
-        let nomeOponenteOnline = '';
-
         function processarMensagemOnline(dados) {
             switch (dados.tipo) {
                 case 'apresentacao':
@@ -2271,6 +2273,7 @@
             modoOnline = true;
             modoTreinamento = false;
             jogoOnlineIniciado = true;
+            vitoriaJaRegistrada = false;
 
             if (enviarSinal && conexao && conexao.open) {
                 conexao.send({ tipo: 'iniciar' });
@@ -2329,6 +2332,13 @@
                     pontosO++; atualizarPlacar(); animarPlacar(placarOEl);
                 }
 
+                // Registra vitória do oponente no MEU rank local também
+                if (!vitoriaJaRegistrada) {
+                    vitoriaJaRegistrada = true;
+                    registrarVitoria(nomeVencedor, simboloOponenteOnline === 'X' ? '✖' : '⭕');
+                    atualizarRank(nomeVencedor);
+                }
+
                 jogoAtivo = false;
                 setTimeout(() => {
                     mostrarParabens(nomeVencedor + ' venceu! 🏆', simboloOponenteOnline === 'X' ? '✖' : '⭕');
@@ -2353,6 +2363,7 @@
         function reiniciarPartidaOnline() {
             limparTabuleiro();
             jogoAtivo = true;
+            vitoriaJaRegistrada = false;
             minhaVezOnline = (meuSimboloOnline === 'X');
             jogadorAtual = 'X';
             atualizarStatusOnline();
@@ -2437,6 +2448,7 @@
             jogadorAtual = jogadorQueComeca;
 
             jogoAtivo = false;
+            vitoriaJaRegistrada = false;
             atualizarStatus();
 
             mostrarAvisoComeca(() => {
@@ -2459,6 +2471,7 @@
             jogadorQueComeca = 'X';
             jogadorAtual = 'X';
             jogoAtivo = false;
+            vitoriaJaRegistrada = false;
 
             modoTreinamento = false;
             modoOnline = false;
@@ -2521,6 +2534,7 @@
             modoTreinamento = false;
             modoOnline = false;
             jogoOnlineIniciado = false;
+            vitoriaJaRegistrada = false;
             badgeRobo.style.display = 'none';
             badgeOnline.style.display = 'none';
             status.style.color = '#667eea';
@@ -2569,21 +2583,25 @@
                     const simboloRobo = simboloHumano === 'X' ? 'O' : 'X';
                     if (jogadorAtual !== simboloRobo) {
                         registrarVitoria(nomeVencedor, avatarVencedorAtual);
-                        atualizarRank();
+                        atualizarRank(nomeVencedor);
                         mostrarParabens('Você venceu o robô! 🏆', avatarVencedorAtual);
                     } else {
                         mostrarParabens('O robô venceu! 🤖', '🤖');
                     }
                 } else if (modoOnline) {
+                    // Eu venci online
                     if (conexao && conexao.open) {
                         conexao.send({ tipo: 'jogada', index, vitoria: true });
                     }
-                    registrarVitoria(nomeVencedor, avatarVencedorAtual);
-                    atualizarRank();
+                    if (!vitoriaJaRegistrada) {
+                        vitoriaJaRegistrada = true;
+                        registrarVitoria(nomeVencedor, avatarVencedorAtual);
+                        atualizarRank(nomeVencedor);
+                    }
                     mostrarParabens(nomeVencedor + ' venceu! 🏆', avatarVencedorAtual);
                 } else {
                     registrarVitoria(nomeVencedor, avatarVencedorAtual);
-                    atualizarRank();
+                    atualizarRank(nomeVencedor);
                     mostrarParabens('O jogador "' + nomeVencedor + '" venceu! 🏆', avatarVencedorAtual);
                 }
 
